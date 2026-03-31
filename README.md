@@ -33,7 +33,6 @@ El motor incluye 3 capas de protección contra el colapso financiero:
 1. La **Solvencia**: $\sum C_{pos}\ge \sum |C_neg| + G_{op}$
 2. La **Masa Crítica**: Ratio mínimo de contribuyentes activos necesarios.
 3. El **Incentivo Laboral**: La derivada de la renta debe ser siempre positiva.
-4. La **Condición de Arope**: el ingreso base debe ser mayor que el 60% de la mediana de la población, si se viola esta condición, se denota que la persona está en riesgo de pobreza.
 
 ## Pruebas (sección bajo actualizaciones).
 Se ha agregado un stress test por medio de las cadenas de Markov, ver el documento 'Analisis_tecnico.md' y 'Markov.ipynb' de la carpeta "Analisis-Cadenas_Markov" para más información.
