@@ -2,7 +2,18 @@
 
 ### 1. El Hallazgo: Homeostasis de Estado Estacionario
 
-Tras someter al **Protocolo EFRD v3.2** a una simulación de transición de estados, se observa que el sistema converge a un vector estacionario $\pi = [0.227, 0.351, 0.286, 0.135]$.
+Tras someter al **Protocolo EFRD v3.2** a una simulación de transición de estados. 
+Con $$P =\left(
+\begin{matrix}
+0.70 & 0.25 & 0.04 & 0.01 \\
+0.15 & 0.70 & 0.12 & 0.03 \\
+0.05 & 0.15 & 0.75 & 0.05 \\
+0.01 & 0.04 & 0.15 & 0.80
+\end{matrix}
+\right)$$
+Donde las columnas equivalen a los estados: Vulnerable (clase baja), equilibrio (clase media), consolidado (clase media) y alto impacto (clase alta).
+
+Se observa que el sistema converge a un vector estacionario $\pi = [0.227, 0.351, 0.286, 0.135]$.
 
 Si bien no elimina toda la pobreza, minimiza los gastos del gobierno y deja un mayor margen para combatirla.
 
