@@ -2,7 +2,7 @@
 
 ## 1. Naturaleza del Sistema (¿Qué es?)
 
-El Protocolo EFRD v3.2 es el "Sistema Operativo" de la Hacienda Pública del siglo XXI. Sustituye el actual modelo de IRPF por tramos y subsidios burocráticos por una **función matemática continua y automatizada**.
+El Protocolo EFRD v3.2 es un proyecto propuesto para ser el "Sistema Operativo" de la Hacienda Pública. Sustituye el actual modelo de IRPF por tramos y subsidios burocráticos por una **función matemática continua y automatizada**.
 
 Su objetivo principal es separar la soberanía política (que decide los objetivos de bienestar) de la ejecución técnica (que garantiza la solvencia matemática del Estado). El sistema asegura que ningún ciudadano caiga por debajo del umbral de la pobreza real, que siempre haya incentivo para trabajar y que el Estado jamás asuma compromisos financieros que no pueda pagar.
 
@@ -86,7 +86,7 @@ El EFRD v3.2 incluye sensores matemáticos que impiden la quiebra del país y el
     
     $$\sum C_{pos} \ge \sum |C_{neg}| + G_{op}$$
     
-    _El sistema audita que la suma de los impuestos recaudados cubra siempre los subsidios entregados y el gasto operativo del Estado ($G_{op}$). Si no cuadra, exige un ajuste del parámetro $\sigma$ o $\alpha$._
+    _El sistema audita que la suma de los impuestos recaudados cubra siempre los subsidios entregados y el gasto operativo del Estado_ ($G_{op}$). _Si no cuadra, exige un ajuste del parámetro $\sigma$ o $\alpha$._
     
 2. **Garantía de Incentivo Laboral (La Derivada Positiva):**
     
