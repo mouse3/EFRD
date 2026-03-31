@@ -4,7 +4,12 @@
 
 Tras someter al **Protocolo EFRD v3.2** a una simulación de transición de estados. 
 Con 
-<img width="247" height="102" alt="image" src="https://github.com/user-attachments/assets/bb95d027-66d7-4978-90f1-83b5510ae09c" />
+$$P = \begin{pmatrix}
+0.70 & 0.25 & 0.04 & 0.01 \\
+0.15 & 0.70 & 0.12 & 0.03 \\
+0.05 & 0.15 & 0.75 & 0.05 \\
+0.01 & 0.04 & 0.15 & 0.80
+\end{pmatrix}$$
 
 Donde las columnas equivalen a los estados (de izq. a drcha.): Vulnerable (clase baja), equilibrio (clase media), consolidado (clase media) y alto impacto (clase alta)
 
