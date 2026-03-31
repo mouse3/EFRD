@@ -34,5 +34,7 @@ El motor incluye 3 capas de protección contra el colapso financiero:
 2. La **Masa Crítica**: Ratio mínimo de contribuyentes activos necesarios.
 3. El **Incentivo Laboral**: La derivada de la renta debe ser siempre positiva.
 
+Se ha agregado un stress test por medio de las cadenas de Markov, ver el documento 'Analisis_tecnico.md' y 'Markov.ipynb' de la carpeta "Analisis-Cadenas_Markov" para más información.
+
 ## Licencia
 Este -ambicioso- proyecto está bajo la licencia **GNU General Public License v3.0 (GPL-3.0)**. Esto garantiza que el algoritmo permanezca abierto, auditable y que cualquier cambio o mejora sea compartida y de libre acceso con la comunidad. Esto garantiza esa "Caja de Cristal", es decir, garantiza que la transparencia se mantenga aún habiendo realizado cambios.
