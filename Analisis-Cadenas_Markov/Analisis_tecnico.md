@@ -16,7 +16,7 @@ El EFRD no es una herramienta de agitación social, sino un **estabilizador auto
 
 ### 2. La Prueba de Resiliencia (Recovery Test)
 
-Se ha ejecutado un test de estrés partiendo de un escenario de colapso total (100% de la población en vulnerabilidad/debajo de $k_base$).
+Se ha ejecutado un test de estrés partiendo de un escenario de colapso total (100% de la población en vulnerabilidad/debajo de $k_{base}$).
 - **Resultado:** El sistema recupera casi al completo (99.99%) de la estructura de la clase media en solo **3 ciclos fiscales** (3 años debido a la entrada de datos).
 
 Entonces, el EFRD actúa como un "mecanismo de autorreparación". Ante cualquier crisis macroeconómica, la configuración de sus incentivos ($\sigma, L, \alpha$) garantiza una reconstrucción de la clase media en tiempo récord, algo imposible para los sistemas de subsidios tradicionales.
