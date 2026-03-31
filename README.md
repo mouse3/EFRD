@@ -16,8 +16,8 @@ El sistema se basa en la **Caja de Cristal**: transparencia total y automatizaci
 ### Factor Familiar $\phi$ (Escala OCDE Modificada).
 El umbral de dignidad $k$ se ajusta según la unidad de convivencia $\phi$:
 - **1.0**: Primer adulto.
-- **0.5**: Segundo adulto / Familiar extra.
-- **0.3**: Por cada menor.
+- **0.5**: Segundo adulto / Familiar extra (sea o no contribuyente).
+- **0.3**: Por cada hijo/menor.
 
 ## Arquitectura Matemática
 #### Sueldo Vitalicio Real ($K_{base}$)
@@ -34,6 +34,7 @@ El motor incluye 3 capas de protección contra el colapso financiero:
 2. La **Masa Crítica**: Ratio mínimo de contribuyentes activos necesarios.
 3. El **Incentivo Laboral**: La derivada de la renta debe ser siempre positiva.
 
+## Pruebas (sección bajo actualizaciones).
 Se ha agregado un stress test por medio de las cadenas de Markov, ver el documento 'Analisis_tecnico.md' y 'Markov.ipynb' de la carpeta "Analisis-Cadenas_Markov" para más información.
 
 ## Licencia
