@@ -16,7 +16,7 @@ El sistema se basa en la **Caja de Cristal**: transparencia total y automatizaci
 ### Factor Familiar $\phi$ (Escala OCDE Modificada).
 El umbral de dignidad $k$ se ajusta según la unidad de convivencia $\phi$:
 - **1.0**: Primer adulto.
-- **0.5**: Segundo adulto / Familiar extra (sea o no contribuyente).
+- **0.5**: Segundo adulto / Familiar extra (solo si está en paro o no recibe renta).
 - **0.3**: Por cada hijo/menor.
 
 ## Arquitectura Matemática
