@@ -6,8 +6,6 @@ from traductores import get_renta_mediana
 from sqlite3 import connect
 from ast import literal_eval
 from os import path
-import sqlite3
-import ast
 from math import exp, ceil
 
 class EFRD_Protocol_v3_2:
@@ -40,7 +38,7 @@ class EFRD_Protocol_v3_2:
         self.k_base = self.alpha * (self.Y / self.N_total) * (1 - self.G) * self.pi
         self.k_arope = 0.6 * self.renta_mediana_nacional
 
-        print(f" === PROTOCOLO EFRD: CARGA DE SISTEMA ===")
+        print(f" PROTOCOLO EFRD: CARGANDO SIST.")
         print(f" Ciudadanos censados (N_total): {self.N_total}")
         print(f" Hogares procesados: {len(self.unidades_convivencia)}")
         print(f" Suelo Vitalicio (k_base): {self.k_base:.2f} €")
@@ -58,13 +56,13 @@ class EFRD_Protocol_v3_2:
             print(f"Archivo no encontrado: {self.db_path}")
             return
 
-        with sqlite3.connect(self.db_path) as conn:
+        with connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT lista_inquilinos, gamma FROM Base_Datos_FINAL")
             
             for fila in cursor.fetchall():
                 # lista_inquilinos es una cadena que representa: [(DNI, Renta, Phi), ...]
-                inquilinos = ast.literal_eval(fila[0])
+                inquilinos = literal_eval(fila[0])
                 gamma = fila[1]
                 
                 # ACTUALIZACIÓN DE N_TOTAL: Sumamos la cantidad de personas en esta vivienda
@@ -174,7 +172,7 @@ class EFRD_Protocol_v3_2:
 
     def _finalizar_auditoria(self):
         saldo, rec, ayu = self.simular_balance(self.k_base)
-        print(f"\n--- LIQUIDACIÓN FINAL DEL SISTEMA ---")
+        print(f"\n LIQUIDACIÓN FINAL")
         print(f"k_base definitivo: {self.k_base:.2f} €")
         print(f"Recaudación: {rec:.2f} € | Ayudas: {ayu:.2f} € | Gasto Estado: {self.G_op:.2f} €")
         print(f"SALDO NETO: {saldo:.2f} €")
