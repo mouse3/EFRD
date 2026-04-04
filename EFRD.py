@@ -78,7 +78,7 @@ class EFRD_Protocol_v3_2:
                 })
 
     def simular_balance(self, k_prueba):
-        """Calcula recaudación vs ayudas para un k_base dado."""
+        #Calcula recaudación vs ayudas para un k_base dado.
         total_recaudado = 0
         total_ayudas = 0
         
