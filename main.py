@@ -1,101 +1,94 @@
 from EFRD import EFRD_Protocol_v3_2, EFRD_AdvancedVisualizer
 from numpy import linspace
+from math import exp
 
 # ==========================================================
-# CONFIGURACIÓN INE (γ geográfico)
+# DATOS MACROECONÓMICOS DE ENTRADA
 # ==========================================================
-diccionario_INE = {
-    "28001": 1.28,  # Madrid centro
-    "28013": 1.25,
-    "08001": 1.26,  # Barcelona
-    "08007": 1.24,
-    "41001": 1.00,  # Sevilla
-    "46001": 1.05,  # Valencia
-    "15001": 0.93,  # Galicia
-    "24001": 0.87,  # León
-    "default": 1.0
-}
+# Ya no necesitamos diccionarios de población ni gammas manuales.
+# El sistema leerá a los contribuyentes desde 'outputs/base_final_efrd.db'
 
+PIB_actual = 5000
+gastos_operativos_estado = 0
+path_db = "conexion/outputs/base_final_efrd.db"
 # ==========================================================
-# DATOS MACRO
+# INICIALIZACIÓN DEL MOTOR (Conecta a SQLite)
 # ==========================================================
-poblacion_españa = {
-    "S0": 10815500,
-    "S1": 16878000,
-    "S2": 14113500,
-    "S3": 6693000
-}
+print("Iniciando motor EFRD. Procesando base de datos catastral...")
 
-PIB_actual = 1.6e12
-mediana_renta = 18500  
-ingresos_fiscales_aeat_hist = 350e9 
-gastos_operativos_estado = 73669590000
-
-# ==========================================================
-# INICIALIZACIÓN DEL MOTOR
-# ==========================================================
 motor = EFRD_Protocol_v3_2(
     PIB_Y=PIB_actual, 
-    Poblacion_Dict=poblacion_españa, 
     Gini=0.33, 
-    Alpha=0.4,
-    Sigma=0.7, 
-    Limite_L=0.60, 
+    Alpha=0.05,
+    Sigma=1.5, 
+    Limite_L=0.80, 
     G_op=gastos_operativos_estado, 
-    mediana_renta_nacional=mediana_renta, 
-    ingresos_totales_pasados=ingresos_fiscales_aeat_hist
+    db_path = path_db
 )
 
-# Inyectamos el diccionario INE al motor
-motor.diccionario_INE = diccionario_INE
+# Nota: La auditoría de seguridad ahora se ejecuta y se imprime de 
+# forma automática dentro del __init__ del motor, auditando al 100% 
+# de la población guardada en la base de datos.
 
 # ==========================================================
-# CÁLCULO INDIVIDUAL (CON γ)
+# SIMULADOR AISLADO (Para pruebas individuales)
 # ==========================================================
-print("--- CÁLCULO INDIVIDUAL ---")
-print("="*30)
+print("\n" + "="*40)
+print("--- SIMULADOR DE CÁLCULO INDIVIDUAL ---")
+print("="*40)
 
-familia = motor.calcular_cuota_hogar(
-    ingresos_brutos_totales=22000,
-    num_adultos_extra=1,
-    num_hijos=4,
-    codigo_postal="28001"  # Madrid centro
+def simular_caso_aislado(renta_bruta, phi_hogar, gamma_zona, motor_activo):
+    """
+    Simula cómo trataría el motor a un hogar específico usando 
+    la fórmula asintótica continua del Modelo Sen.
+    """
+    k_hogar = motor_activo.k_base * gamma_zona * phi_hogar
+    diferencial = renta_bruta - k_hogar
+    
+    if diferencial > 0:
+        x = diferencial / k_hogar if k_hogar > 0 else 0
+        tasa = motor_activo.L * (1 - exp(-motor_activo.sigma * abs(x)))
+        cuota = diferencial * tasa
+    else:
+        # Si la renta no supera el k_hogar, la cuota es negativa (Recibe subsidio)
+        cuota = diferencial 
+
+    print(f"Renta Bruta: {renta_bruta:.2f}€")
+    print(f"γ (Coste Zona): {gamma_zona} | φ (Composición): {phi_hogar}")
+    print(f"Sueldo Hogar Protegido (k_hogar): {k_hogar:.2f}€")
+    print("-" * 40)
+    print(f"Cuota Final (C): {cuota:.2f}€ ({'RECIBE' if cuota < 0 else 'PAGA AL ESTADO'})")
+    print(f"Dinero Neto Final: {(renta_bruta - cuota):.2f}€\n")
+
+# Ejemplo: Familia numerosa en zona muy cara (ej. Madrid Centro)
+# 2 adultos (1.0 + 0.5) + 4 hijos (4 * 0.3) = phi de 2.7
+simular_caso_aislado(
+    renta_bruta=22000, 
+    phi_hogar=2.7, 
+    gamma_zona=1.28, 
+    motor_activo=motor
 )
 
-print(f"γ aplicado: {familia['gamma']}")
-print(f"k_base ajustado: {familia['k_base_ajustado']}€")
-print(f"Sueldo Hogar Protegido (k_hogar): {familia['k_hogar']}€")
-print(f"Cuota Final (C): {familia['C_cuota']}€ ({'Recibe' if familia['C_cuota'] < 0 else 'Paga'})")
-print(f"Dinero Neto Final: {familia['Neto']}€\n\n")
+# Ejemplo: Soltero sin hijos en zona barata (ej. León)
+# 1 adulto = phi de 1.0
+simular_caso_aislado(
+    renta_bruta=90000, 
+    phi_hogar=1.0, 
+    gamma_zona=0.87, 
+    motor_activo=motor
+)
 
-# ==========================================================
-# AUDITORÍA DE SEGURIDAD (GEOGRÁFICA)
-# ==========================================================
-print("--- AUDITORÍA DE SEGURIDAD ---")
-print("="*30)
 
-poblacion_ejemplo = [
-    {'ingreso': 12000, 'adultos': 1, 'hijos': 2, 'codigo_postal': "24001"},
-    {'ingreso': 45000, 'adultos': 1, 'hijos': 0, 'codigo_postal': "41001"},
-    {'ingreso': 90000, 'adultos': 1, 'hijos': 1, 'codigo_postal': "28013"},
-    {'ingreso': 500000, 'adultos': 0, 'hijos': 0, 'codigo_postal': "28001"}
-]
-
-reporte = motor.auditoria_sistema(poblacion_ejemplo)
-
-for k, v in reporte.items():
-    print(f"{k.replace('_', ' '):<30}: {v}")
-
-# ==========================================================
-# VISUALIZACIÓN AVANZADA
-# ==========================================================
+# VISUALIZACIÓN AVANZADA / GRÄFICOS
+"""
 adv = EFRD_AdvancedVisualizer(motor)
 
 rango_ingresos = linspace(0, 150000, 150)
 rango_phis = linspace(1.0, 3.0, 30)
 
-# Activar si quieres análisis:
-# adv.comparar_sigmas(rango_ingresos, [0.3, 0.75, 1.5], 1, 3) 
-# adv.comparar_limite_L(rango_ingresos, [0.4, 0.6, 0.8]) 
-# adv.comparar_alpha(rango_ingresos, [0.3, 0.45, 0.6]) 
-# adv.mapa_calor(rango_ingresos, rango_phis)
+
+adv.comparar_sigmas(rango_ingresos, [0.3, 0.75, 1.5], 1, 3) 
+adv.comparar_limite_L(rango_ingresos, [0.4, 0.6, 0.8]) 
+adv.comparar_alpha(rango_ingresos, [0.3, 0.45, 0.6]) 
+adv.mapa_calor(rango_ingresos, rango_phis)
+"""

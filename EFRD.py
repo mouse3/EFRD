@@ -2,303 +2,184 @@ from math import exp, ceil
 import matplotlib.pyplot as plt
 from numpy import zeros
 from copy import deepcopy
+from traductores import get_renta_mediana
+from sqlite3 import connect
+from ast import literal_eval
+from os import path
+import sqlite3
+import ast
+from math import exp, ceil
 
 class EFRD_Protocol_v3_2:
-    def __init__(self, PIB_Y, Poblacion_Dict, Gini, Alpha, Sigma, Limite_L, G_op, mediana_renta_nacional, ingresos_totales_pasados, IPC_Pi=1.0):
-        # Variables de Entrada
+    def __init__(self, PIB_Y, Gini, Alpha, Sigma, Limite_L, G_op, IPC_Pi=1.0, db_path='outputs/base_final_efrd.db'):
+        # Parámetros de configuración
         self.Y = PIB_Y
-        self.N_dist = Poblacion_Dict  
-        self.N_total = sum(self.N_dist.values())
         self.G = Gini   
         self.alpha = Alpha  
         self.sigma = Sigma 
         self.L = Limite_L 
         self.G_op = G_op 
         self.pi = IPC_Pi
-        self.ingresos_pasados = ingresos_totales_pasados 
-        self.diccionario_INE = {
-            "28001": 1.28,
-            "28013": 1.25,
-            "08001": 1.26,
-            "08007": 1.24,
-            "41001": 1.00,
-            "46001": 1.05,
-            "15001": 0.93,
-            "24001": 0.87,
-            "default": 1.0
-        }
+        self.renta_mediana_nacional = get_renta_mediana()
+        self.db_path = db_path
         
-        # 1. Cálculo del Suelo Vitalicio Base (k) - Modelo Sen
-        self.k_base = self.alpha * (self.Y / self.N_total * (1 - self.G)) * self.pi
+        # Inicialización de contadores
+        self.unidades_convivencia = []
+        self.N_total = 0 
         
-        # Definición del estándar mínimo de dignidad (60% mediana del INE)
-        self.k_arope = 0.6 * mediana_renta_nacional
+        # EXTRACCIÓN DE DATOS (Paso crítico: Contar ciudadanos)
+        self._cargar_datos_desde_db()
 
-        # MOTOR DE ESTIMACIÓN MACROECONÓMICA DINÁMICA
-        rentas_medias_estimadas = {
-            "S0": 8000,                            # Vulnerables (bajo AROPE)
-            "S1": mediana_renta_nacional,          # Equilibrio (renta media/mediana)
-            "S2": mediana_renta_nacional * 2.5,    # Consolidados (clase media-alta)
-            "S3": mediana_renta_nacional * 6.0     # Alto Impacto (clase alta)
-        }
-        
-        poblacion_receptora = self.N_dist["S0"] + self.N_dist["S1"]
+        if self.N_total == 0:
+            print(" ERROR: No se han encontrado ciudadanos en la base de datos.")
+            self.k_base = 0
+            return
 
-        # Función interna para simular el balance con un k_base específico
-        def simular_balance(k_prueba):
-            # Guardamos el k_base original
-            k_temp = self.k_base
-            self.k_base = k_prueba 
+        # CÁLCULO DE MACROMAGNITUDES (Ahora con N_total real)
+        # k_base = (Renta per cápita media) * (Equidad) * (Factor de cobertura)
+        self.k_base = self.alpha * (self.Y / self.N_total) * (1 - self.G) * self.pi
+        self.k_arope = 0.6 * self.renta_mediana_nacional
 
-            recaudacion = 0
-            coste = 0
+        print(f" === PROTOCOLO EFRD: CARGA DE SISTEMA ===")
+        print(f" Ciudadanos censados (N_total): {self.N_total}")
+        print(f" Hogares procesados: {len(self.unidades_convivencia)}")
+        print(f" Suelo Vitalicio (k_base): {self.k_base:.2f} €")
+        print(f" Umbral Pobreza (AROPE): {self.k_arope:.2f} €")
+        print("-" * 40)
 
-            # Distribución geográfica simplificada (puedes refinarla)
-            codigos_tipo = {
-                "S0": "24001",  # zona rural (bajo coste)
-                "S1": "41001",  # coste medio
-                "S2": "28013",  # urbano alto
-                "S3": "28001"   # núcleo premium
-            }
+        # EJECUCIÓN DE PROTOCOLOS DE SOLVENCIA Y DIGNIDAD
+        self._ejecutar_logica_central()
 
-            rentas_medias_estimadas = {
-                "S0": 8000,
-                "S1": self.k_arope / 0.6 if self.k_arope else 18000,
-                "S2": (self.k_arope / 0.6) * 2.5 if self.k_arope else 45000,
-                "S3": (self.k_arope / 0.6) * 6.0 if self.k_arope else 100000
-            }
+    def _cargar_datos_desde_db(self):
+        """
+        Recorre la DB y suma cada individuo de las listas para obtener el N_total real.
+        """
+        if not path.exists(self.db_path):
+            print(f"Archivo no encontrado: {self.db_path}")
+            return
 
-            # SIMULACIÓN CON γ TERRITORIAL
-            for estado, num_personas in self.N_dist.items():
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT lista_inquilinos, gamma FROM Base_Datos_FINAL")
             
-                cp = codigos_tipo.get(estado, "00000")
-
-                resultado = self.calcular_cuota_hogar(
-                    ingresos_brutos_totales=rentas_medias_estimadas[estado],
-                    num_adultos_extra=0,
-                    num_hijos=0,
-                    codigo_postal=cp
-                )
-
-                cuota = resultado["C_cuota"]
-
-                if cuota > 0:
-                    recaudacion += cuota * num_personas
-                else:
-                    coste += abs(cuota) * num_personas
-
-            # Balance final
-            saldo = recaudacion - self.G_op - coste
-
-            # Restauramos k_base original
-            self.k_base = k_temp 
-
-            return saldo, recaudacion
-
-        # Evaluamos el estado inicial
-        saldo_actual, rec_actual = simular_balance(self.k_base)
-        self.ingresos_totales = rec_actual
-
-        print(f"--- PARÁMETROS DE POLÍTICA FISCAL ---")
-        print(f"alpha: {self.alpha} | sigma: {self.sigma} | limite L: {self.L}")
-        print(f"Recaudación Bruta Dinámica Estimada: {self.ingresos_totales/1e9:.2f} B€\n")
-        
-
-        # PROTOCOLO DE AUDITORÍA Y TOMA DE DECISIONES DE EMERGENCIA
-        ajuste_emergencia_activado = False
-        
-        if saldo_actual < 0:
-            print(f" ALERTA CRÍTICA: El sistema es INSOLVENTE con el k_base inicial ({self.k_base:.2f}€). Faltan {abs(saldo_actual)/1e9:.2f} B€.")
-            
-            # Algoritmo de Búsqueda Binaria: Encuentra el k_base exacto de equilibrio
-            k_min = 0.0
-            k_max = self.k_base
-            
-            for _ in range(100): 
-                k_mid = (k_min + k_max) / 2
-                saldo_mid, _ = simular_balance(k_mid)
+            for fila in cursor.fetchall():
+                # lista_inquilinos es una cadena que representa: [(DNI, Renta, Phi), ...]
+                inquilinos = ast.literal_eval(fila[0])
+                gamma = fila[1]
                 
-                if saldo_mid >= 0:
-                    k_min = k_mid 
-                else:
-                    k_max = k_mid 
+                # ACTUALIZACIÓN DE N_TOTAL: Sumamos la cantidad de personas en esta vivienda
+                self.N_total += len(inquilinos)
+                
+                # Agregamos el hogar para las simulaciones fiscales
+                self.unidades_convivencia.append({
+                    'renta_total': sum(per[1] for per in inquilinos),
+                    'phi_total': sum(per[2] for per in inquilinos),
+                    'gamma': gamma
+                })
 
-            # Menú Interactivo de Decisión Política
-            while True:
-                try:
-                    print("\nDECISIÓN REQUERIDA:")
-                    print(" 1 - Adquirir deuda pública para pagar el sueldo vitalicio actual.")
-                    print(f" 2 - Cambiar el sueldo vitalicio (Resultante de deuda: 0). k_base se ajustará a: {k_min:.2f}€")
-                    opcion = int(input("Seleccione (1/2): "))
-                    
-                    if opcion == 2:
-                        self.k_base = k_min # Asignamos el k_base máximo viable
-                        ajuste_emergencia_activado = True
-                        print(f"\n AJUSTE DE EMERGENCIA: k_base reducido automáticamente a {self.k_base:.2f}€ para garantizar el 100% de los pagos.")
-                        break
-                    elif opcion == 1:
-                        print("\n RESOLUCIÓN: Se asume el déficit vía Deuda Pública. El k_base se mantiene.")
-                        break
-                    else:
-                        print(" Opción no válida. Introduzca 1 o 2.")
-                except ValueError:
-                    print(" Entrada inválida. Por favor, introduzca un número.")
-
-        else:
-            print(f" FINANCIACIÓN ASEGURADA para k_base actual ({self.k_base:.2f}€).")
+    def simular_balance(self, k_prueba):
+        """Calcula recaudación vs ayudas para un k_base dado."""
+        total_recaudado = 0
+        total_ayudas = 0
+        
+        for hogar in self.unidades_convivencia:
+            # k_hogar = k_base * gamma (zona) * phi (familia)
+            umbral_hogar = k_prueba * hogar['gamma'] * hogar['phi_total']
+            renta = hogar['renta_total']
+            diferencial = renta - umbral_hogar
             
-        # VALIDACIÓN DE DIGNIDAD (Evaluada SIEMPRE tras la solvencia)
+            if diferencial > 0:
+                # Impuesto progresivo asintótico
+                # Si el umbral es 0 (ajuste extremo), el diferencial tributa sobre sí mismo
+                x = diferencial / (renta * 0.1) if umbral_hogar <= 0 else diferencial / umbral_hogar
+                tasa = self.L * (1 - exp(-self.sigma * abs(x)))
+                total_recaudado += diferencial * tasa
+            else:
+                # Subsidio de cobertura
+                total_ayudas += abs(diferencial)
+                
+        saldo = total_recaudado - total_ayudas - self.G_op
+        return saldo, total_recaudado, total_ayudas
+
+    def _ejecutar_logica_central(self):
+        """Protocolo de toma de decisiones interactivo (Solvencia y Dignidad)."""
+        saldo_actual, rec_actual, ayudas_actual = self.simular_balance(self.k_base)
+        ajuste_emergencia_activado = False
+
+        # Escenario: insolvencia (déficit) ---
+        if saldo_actual < 0:
+            print(f"\n [ALERTA CRÍTICA] El sistema es INSOLVENTE.")
+            print(f" Déficit detectado: {abs(saldo_actual):.2f} €")
+            
+            # Búsqueda Binaria para hallar el k_base de equilibrio
+            k_min, k_max = 0.0, self.k_base
+            for _ in range(100):
+                k_mid = (k_min + k_max) / 2
+                s_mid, _, _ = self.simular_balance(k_mid)
+                if s_mid >= 0: k_min = k_mid
+                else: k_max = k_mid
+            
+            print(f"\nDECISIÓN DE EMERGENCIA REQUERIDA:")
+            print(f" 1 - Adquirir DEUDA PÚBLICA para mantener k_base ({self.k_base:.2f}€).")
+            print(f" 2 - AJUSTE FISCAL: Reducir k_base al punto de equilibrio ({k_min:.2f}€).")
+            
+            while True:
+                opcion = input("Seleccione una opción (1/2): ")
+                if opcion == "1":
+                    print("\nRESOLUCIÓN: Se asume déficit vía Deuda Pública. k_base mantenido.")
+                    break
+                elif opcion == "2":
+                    self.k_base = k_min
+                    ajuste_emergencia_activado = True
+                    print(f"\nAJUSTE APLICADO: k_base reducido a {self.k_base:.2f}€ para garantizar solvencia.")
+                    break
+                else:
+                    print("Opción no válida.")
+
+        # Escenario: Ausencia dignidad (protocolo PSD)
+        # Se evalúa si el sueldo está por debajo de la pobreza (AROPE)
         if self.k_base < self.k_arope:
-            print(f" GESTIÓN INSUFICIENTE: k_base actual ({self.k_base:.2f}€) está por debajo de AROPE ({self.k_arope:.2f}€).")
+            print(f"\n[EVALUACIÓN DE DIGNIDAD] k_base ({self.k_base:.2f}€) < AROPE ({self.k_arope:.2f}€).")
             
             if ajuste_emergencia_activado:
-                print(f" PROTOCOLO PSD BLOQUEADO: Imposible elevar a AROPE tras aplicar un recorte por insolvencia estructural.")
+                print("PROTOCOLO PSD BLOQUEADO: No se puede aumentar el gasto tras un recorte de emergencia.")
             else:
-                # Simulamos el escenario PSD (Dignidad)
-                saldo_arope, rec_arope = simular_balance(self.k_arope)
-                coste_psd_extra = (self.k_arope - self.k_base) * poblacion_receptora
+                # Simulamos si el sistema aguantaría subir a AROPE
+                saldo_psd, _, _ = self.simular_balance(self.k_arope)
                 
-                if saldo_arope >= 0:
-                    print(f"\n--- PROYECCIÓN DE IMPACTO PROTOCOLO PSD ---")
-                    print(f"Subida de suelo: {self.k_base:.2f}€ -> {self.k_arope:.2f}€")
-                    print(f"Coste adicional para el Estado: {coste_psd_extra/1e9:.2f} B€")
-                    print(f"Superávit resultante tras PSD: {saldo_arope/1e9:.2f} B€")
+                if saldo_psd >= 0:
+                    print(f"PROYECCIÓN: El sistema tiene superávit suficiente para alcanzar el estándar AROPE.")
+                    print(f" 1 - NO: Mantener k_base actual y maximizar ahorro estatal.")
+                    print(f" 2 - SÍ: Activar PROTOCOLO PSD (Subir sueldo a {self.k_arope:.2f}€).")
                     
                     while True:
-                        try:
-                            print(f"\n¿Desea aplicar el ajuste de dignidad?")
-                            print(f" 1 - NO: Mantener k_base actual y maximizar ahorro.")
-                            print(f" 2 - SÍ: Activar PSD (Nivelar con AROPE).")
-                            op_psd = int(input("Seleccione (1/2): "))
-                            
-                            if op_psd == 2:
-                                self.k_base = self.k_arope
-                                print(f" PROTOCOLO PSD ACTIVADO: El sistema ahora cumple con el estándar de dignidad.")
-                                break
-                            elif op_psd == 1:
-                                print(f" PSD RECHAZADO: Se mantiene el k_base original por prudencia fiscal.")
-                                break
-                            else:
-                                print(" Opción no válida.")
-                        except ValueError:
-                            print(" Entrada inválida.")
+                        op_psd = input("¿Desea aplicar el ajuste de dignidad? (1/2): ")
+                        if op_psd == "2":
+                            self.k_base = self.k_arope
+                            print("PROTOCOLO PSD ACTIVADO: El sistema ahora cumple con el estándar de dignidad.")
+                            break
+                        elif op_psd == "1":
+                            print("PSD RECHAZADO: Se mantiene k_base original por prudencia fiscal.")
+                            break
+                        else:
+                            print("Opción no válida.")
                 else:
-                    print(f" IMPOSIBILIDAD TÉCNICA: Activar el PSD generaría un déficit de {abs(saldo_arope)/1e9:.2f} B€.")
+                    print(f"PSD NO VIABLE: Subir a nivel AROPE generaría un déficit de {abs(saldo_psd):.2f} €.")
+        
         else:
-            print(f" SISTEMA ÓPTIMO: El suelo vitalicio ya supera el umbral de pobreza.")
+            print(f"\n[SISTEMA ÓPTIMO] El suelo vitalicio ya supera el umbral de pobreza.")
 
-        # DEBUG DE LIQUIDACIÓN FINAL CON K_BASE DEFINITIVO
-        saldo_final, rec_final = simular_balance(self.k_base)
-        self.ingresos_totales = rec_final
-        coste_final_sistema = poblacion_receptora * self.k_base
-        recaudacion_disponible = self.ingresos_totales - self.G_op
-        
-        print(f"\n--- DEBUG DE LIQUIDACIÓN FINAL ---")
-        print(f"Sueldo Base Definitivo (k): {self.k_base:.2f} €")
-        print(f"Coste Total Ayudas: {coste_final_sistema/1e9:.2f} B€")
-        print(f"Gastos Operativos (G_op): {self.G_op/1e9:.2f} B€")
-        
-        if saldo_final > -0.1: 
-            print(f" EXCEDENTE DE CAJA: Sobran {max(0, saldo_final)/1e9:.2f} B€ para inversión o reserva.")
-        else:
-            print(f" DÉFICIT OPERATIVO: Faltan {abs(saldo_final)/1e9:.2f} B€ (Requiere emisión de Deuda Pública).")
-        print("\n" + "-="*30 + "\n")
-    
-    def obtener_gamma(self, codigo_postal):
-        return self.diccionario_INE.get(codigo_postal, self.diccionario_INE["default"])
+        # Finalizamos con la liquidación definitiva
+        self._finalizar_auditoria()
 
-    def coste_ayudas_desde_dataset(dataset_poblacion, k_base):
-        total_ayudas = 0
-        for p in dataset_poblacion:
-            phi = 1.0 + (p['adultos'] - 1) * 0.5 + p['hijos'] * 0.3
-            k_hogar = k_base * phi
-            saldo = p['ingreso'] - k_hogar
-            if saldo < 0:
-                total_ayudas += -saldo   # suma del saldo negativo en valor absoluto
-        return total_ayudas
-    
-
-    
-
-
-    def calcular_cuota_hogar(self, ingresos_brutos_totales, num_adultos_extra, num_hijos, codigo_postal="00000"):
-
-        gamma = self.obtener_gamma(codigo_postal)
-        k_base_ajustado = self.k_base * gamma
-
-        phi = 1.0 + (num_adultos_extra * 0.5) + (num_hijos * 0.3)
-        k_hogar = k_base_ajustado * phi
-
-        B = ingresos_brutos_totales
-        diferencial = B - k_hogar
-
-        x = diferencial / k_hogar if k_hogar != 0 else 0
-        tipo_impositivo = self.L * (1 - exp(-self.sigma * abs(x)))
-
-        cuota_C = diferencial * tipo_impositivo
-
-        return {
-            "gamma": gamma,
-            "k_base_ajustado": round(k_base_ajustado, 2),
-            "k_hogar": round(k_hogar, 2),
-            "C_cuota": round(cuota_C, 2),
-            "Neto": round(B - cuota_C, 2)
-        }
-
-    def auditoria_sistema(self, dataset_poblacion):
-        resultados = [self.calcular_cuota_hogar(p['ingreso'], p['adultos'], p['hijos']) for p in dataset_poblacion]
-    
-        recaudacion = sum(r['C_cuota'] for r in resultados if r['C_cuota'] > 0)
-        ayudas = sum(-r['C_cuota'] for r in resultados if r['C_cuota'] < 0)
-    
-        solvente = recaudacion >= (ayudas + self.G_op)
-    
-        contribuyentes = [r for r in resultados if r['C_cuota'] > 0]
-        n_contrib = len(contribuyentes)
-        c_media_pos = sum(c['C_cuota'] for c in contribuyentes) / n_contrib if n_contrib > 0 else 0
-        min_contrib_req = (ayudas + self.G_op) / c_media_pos if c_media_pos > 0 else float('inf')
-    
-        return {
-            "Solvencia_Estado": "OK" if solvente else "RIESGO DE QUIEBRA",
-            "Balance_Neto_Efectivo": round(recaudacion - ayudas - self.G_op, 2),
-            "N_Contribuyentes_Actual": n_contrib,
-            "N_Contribuyentes_Minimo_Req": ceil(min_contrib_req),
-            "Masa_Critica_Suficiente": n_contrib >= min_contrib_req
-        }
-
-
-    def auditoria_sistema(self, dataset_poblacion):
-        """
-        Ejecuta las 4 Inecuaciones de Seguridad del Protocolo.
-        Dataset esperado: lista de dicts con { 'ingreso': float, 'adultos': int, 'hijos': int }
-        """
-        resultados = [
-            self.calcular_cuota_hogar(
-                p['ingreso'],
-                p['adultos'],
-                p['hijos'],
-                p.get('codigo_postal', "00000")
-            )
-            for p in dataset_poblacion
-        ]
-
-        recaudacion = sum(r['C_cuota'] for r in resultados if r['C_cuota'] > 0)
-        ayudas = sum(abs(r['C_cuota']) for r in resultados if r['C_cuota'] < 0)
-        
-        solvente = recaudacion >= (ayudas + self.G_op)
-        
-        contribuyentes = [r for r in resultados if r['C_cuota'] > 0]
-        n_contrib = len(contribuyentes)
-        c_media_pos = sum(c['C_cuota'] for c in contribuyentes) / n_contrib if n_contrib > 0 else 0
-        min_contrib_req = (ayudas + self.G_op) / c_media_pos if c_media_pos > 0 else float('inf')
-        
-        return {
-            "Solvencia_Estado": "OK" if solvente else "RIESGO DE QUIEBRA",
-            "Balance_Neto_Efectivo": round(recaudacion - ayudas - self.G_op, 2),
-            "N_Contribuyentes_Actual": n_contrib,
-            "N_Contribuyentes_Minimo_Req": ceil(min_contrib_req),
-            "Masa_Critica_Suficiente": n_contrib >= min_contrib_req
-        }
+    def _finalizar_auditoria(self):
+        saldo, rec, ayu = self.simular_balance(self.k_base)
+        print(f"\n--- LIQUIDACIÓN FINAL DEL SISTEMA ---")
+        print(f"k_base definitivo: {self.k_base:.2f} €")
+        print(f"Recaudación: {rec:.2f} € | Ayudas: {ayu:.2f} € | Gasto Estado: {self.G_op:.2f} €")
+        print(f"SALDO NETO: {saldo:.2f} €")
+        print(f"Estado: {'SOLVENTE' if saldo >= 0 else 'DÉFICIT (DEUDA)'}")
+        print("-" * 40)
 
 
 class EFRD_AdvancedVisualizer:

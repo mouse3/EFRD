@@ -62,7 +62,7 @@ def ejecutar_transformacion():
             CASE 
                 WHEN C.edad < 18 THEN 0.3
                 WHEN AUX.tipo = 'virtual' AND A.phi_social IS NOT NULL THEN A.phi_social
-                WHEN C.edad >= 18 AND COALESCE(H.renta_mensual, 0.0) > 0 THEN 0
+                WHEN C.edad >= 18 AND COALESCE(H.renta_mensual, 0.0) > 0 THEN 1
                 ELSE 0.5 
             END as phi_final,
             -- LÓGICA GAMMA (NUEVA PRIORIDAD)

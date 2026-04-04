@@ -1,4 +1,4 @@
 ref_catastral:str , tipo_unidad:str, es_habitual:int, "lista_inquilinos[(DNI/NIE, RENTA, phi), (...)]", gamma:float
-"REF_MAD_001", "física", 1, "[('11111111H', 2500.0, 0), ('22222222J', 0.0, 0.3)]", 1.3
-"VIRTUAL_X1234567L", "virtual", 1, "[('X1234567L', 1500.0, 0)]", 1.0
+"REF_MAD_001", "física", 1, "[('11111111H', 2500.0, 1), ('22222222J', 0.0, 0.3)]", 1.3
+"VIRTUAL_X1234567L", "virtual", 1, "[('X1234567L', 1500.0, 1)]", 1.0
 "VIRTUAL_Y9876543M", "virtual", 1, "[('Y9876543M', 0.0, 0.5)]", 1.35

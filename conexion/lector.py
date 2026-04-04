@@ -22,4 +22,4 @@ try:
     # Cierra la conexión
     conn.close()
 except Exception as e:
-        print(f"ERROR CRÍTICO: {type(e).__name__}\n{e}")
+        print(f"ERROR CRÍTICO: {type(e).__name__}\n{e}\n\n")
