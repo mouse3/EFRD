@@ -8,8 +8,6 @@ if os.path.exists(db_output): os.remove(db_output)
 def ejecutar_transformacion():
     try:
         # Conectamos a una base de datos en MEMORIA para la tabla auxiliar
-        # Esto asegura que Habitabilidad_Real no sea un archivo físico
-
         conn = sqlite3.connect(':memory:') 
         cursor = conn.cursor()
 
@@ -18,7 +16,7 @@ def ejecutar_transformacion():
         for f in fuentes:
             cursor.execute(f"ATTACH DATABASE 'inputs/{f}.db' AS db_{f}")
 
-        # crear tabla auxiliar (Solo existe durante la ejecución)
+        # Crear tabla auxiliar (Solo existe durante la ejecución)
         cursor.execute("""
             CREATE TABLE Habitabilidad_Auxiliar AS
             SELECT 
@@ -32,44 +30,47 @@ def ejecutar_transformacion():
             LEFT JOIN db_padron.Data_base_Padron P ON C.dni_nie_nif = P.dni_nie_nif
             LEFT JOIN db_hacienda.Data_base_Hacienda H ON C.dni_nie_nif = H.dni_nie_nif
             LEFT JOIN db_asistencia.Data_base_Asistencia_Social A ON C.dni_nie_nif = A.dni_nie_nif
-            -- REGLA DE EXCLUSIÓN: Solo entran si están en Padrón, Asistencia o tienen Nómina
             WHERE P.dni_nie_nif IS NOT NULL 
                OR A.dni_nie_nif IS NOT NULL 
                OR (H.renta_mensual IS NOT NULL AND H.renta_mensual > 0)
         """)
 
-        # Crear Base de datos final (Archivo Físico .db)
+        # Crear Base de datos final (Archivo Físico .db) con las columnas del inquilino aplanadas
         cursor.execute(f"ATTACH DATABASE '{db_output}' AS db_final")
         cursor.execute("""
             CREATE TABLE db_final.Base_Datos_FINAL (
-                ref_catastral TEXT PRIMARY KEY,
+                ref_catastral TEXT,
                 tipo_unit TEXT,
                 es_habitual INTEGER,
-                lista_inquilinos TEXT,
-                gamma REAL
+                dni_nie_nif TEXT,
+                renta_mensual REAL,
+                phi REAL,
+                gamma REAL,
+                PRIMARY KEY (ref_catastral, dni_nie_nif) -- Clave compuesta para evitar duplicados exactos
             )
         """)
 
-        # PROCESAR Y AGRUPAR (Lógica Phi y Analogía CSV)
-        # Obtenemos los datos detallados cruzando la auxiliar con el resto
-        query_cruce = """
+        # PROCESAR E INSERCIÓN DIRECTA (Sin bucles de Python)
+        query_insercion_directa = """
+        INSERT INTO db_final.Base_Datos_FINAL
         SELECT 
-            AUX.ref_final,
-            AUX.tipo,
+            AUX.ref_final as ref_catastral,
+            AUX.tipo as tipo_unit,
+            1 as es_habitual,
             C.dni_nie_nif,
-            COALESCE(H.renta_mensual, 0.0),
-            -- LÓGICA PHI (Ya definida)
+            COALESCE(H.renta_mensual, 0.0) as renta_mensual,
+            -- LÓGICA PHI
             CASE 
                 WHEN C.edad < 18 THEN 0.3
                 WHEN AUX.tipo = 'virtual' AND A.phi_social IS NOT NULL THEN A.phi_social
                 WHEN C.edad >= 18 AND COALESCE(H.renta_mensual, 0.0) > 0 THEN 1
                 ELSE 0.5 
-            END as phi_final,
-            -- LÓGICA GAMMA (NUEVA PRIORIDAD)
+            END as phi,
+            -- LÓGICA GAMMA
             CASE 
-                WHEN AUX.tipo = 'virtual' AND A.gamma_local IS NOT NULL THEN A.gamma_local -- Prioridad Municipio para Virtuales
-                ELSE COALESCE(I.gamma, 1.0) -- Prioridad INE para Físicas (o fallback a 1.0)
-            END as gamma_final
+                WHEN AUX.tipo = 'virtual' AND A.gamma_local IS NOT NULL THEN A.gamma_local 
+                ELSE COALESCE(I.gamma, 1.0) 
+            END as gamma
         FROM Habitabilidad_Auxiliar AUX
         JOIN db_cnp.Data_base_CNP C ON AUX.dni_nie_nif = C.dni_nie_nif
         LEFT JOIN db_hacienda.Data_base_Hacienda H ON C.dni_nie_nif = H.dni_nie_nif
@@ -79,24 +80,12 @@ def ejecutar_transformacion():
         LEFT JOIN db_ine.Data_base_INE I ON V.codigo_postal = I.codigo_postal
         """
 
-        cursor.execute(query_cruce)
-        filas = cursor.fetchall()
-
-        # Agrupación por vivienda
-        agrupado = {}
-        for ref, tipo, dni, renta, phi, gamma in filas:
-            if ref not in agrupado:
-                agrupado[ref] = {'tipo': tipo, 'gamma': gamma, 'inquilinos': []}
-            agrupado[ref]['inquilinos'].append((dni, renta, phi))
-
-        # Inserción final
-        for ref, d in agrupado.items():
-            cursor.execute("INSERT INTO db_final.Base_Datos_FINAL VALUES (?, ?, ?, ?, ?)",
-                            (ref, d['tipo'], 1, str(d['inquilinos']), d['gamma']))
+        # Ejecutamos la inserción masiva directamente en SQL
+        cursor.execute(query_insercion_directa)
 
         conn.commit()
         conn.close()
-        print(f" Transformación completa. Tabla auxiliar destruida. Resultado en: {db_output}")
+        print(f" Transformación completa (Formato Largo). Resultado en: {db_output}")
 
     except Exception as e:
         print(f"ERROR CRÍTICO: {type(e).__name__}\n{e}")

@@ -1,4 +1,4 @@
-// Bloque 1: Bases de datos de origen (organizaciones nacionales) INPUTs
+// Bases de datos de origen (INPUTS)
 
 Table Data_base_INE {
   codigo_postal int [primary key]
@@ -17,12 +17,12 @@ Table Data_base_Hacienda {
 
 Table Data_base_Ministerio_Vivienda {
   ref_catastral varchar [primary key]
-  codigo_postal int [ref: > Data_base_INE.codigo_postal]
+  codigo_postal int
 }
 
 Table Data_base_Padron {
   dni_nie_nif varchar [primary key]
-  ref_catastral varchar [ref: > Data_base_Ministerio_Vivienda.ref_catastral]
+  ref_catastral varchar
 }
 
 Table Data_base_Asistencia_Social {
@@ -32,47 +32,50 @@ Table Data_base_Asistencia_Social {
   gamma_local float [note: 'Coste de vida local definido por el municipio']
 }
 
-
-// Bloque 2: Transformación (Lógica EFRD - ocurre en la RAM)
+// Transformación (Tabla Auxiliar en RAM)
 
 Table Habitabilidad_Real {
   id_interno int [primary key] 
-  dni_nie_nif varchar [ref: > Data_base_CNP.dni_nie_nif]
+  dni_nie_nif varchar
   ref_catastral varchar [note: 'Padrón (Física) | Hacienda/Asistencia (Virtual)']
   es_residencia_habitual boolean 
   
-  Note: 'Esta tabla es Auxiliar. Resuelve la identidad y asigna el "techo" (Físico o Virtual). No existe como archivo.'
+  Note: 'Esta tabla es Auxiliar. Resuelve la identidad y asigna el techo (Físico o Virtual). No existe como archivo físico.'
 }
 
-// Bloque 3: Salida final (es una analogía al .csv)
+
+// Salida final (Formato Largo / Explotado)
 
 Table Base_Datos_FINAL {
-  ref_catastral varchar [primary key, note: 'ID Vivienda o VIRTUAL_DNI']
-  tipo_unidad varchar // fisica | virtual
-  es_habitual boolean
-  lista_inquilinos text // [(ID, renta, phi), ...]
+  ref_catastral varchar [note: 'ID Vivienda o VIRTUAL_DNI. Se repite por cada inquilino.']
+  tipo_unit varchar // fisica | virtual
+  es_habitual integer
+  dni_nie_nif varchar [note: 'DNI del inquilino individual']
+  renta_mensual float
+  phi float [note: 'Calculado individualmente: 1. Edad, 2. Asistencia Social, 3. Hacienda']
   gamma float [note: 'INE (si física) | Asistencia_Social (si virtual)']
-  
-  Note: '\Phi en lista_inquilinos prioriza: 1. Edad, 2. Asistencia Social, 3. Hacienda'
+
+  Note: 'Estructura aplanada. La combinación ref_catastral + dni_nie_nif actúa como clave única.'
 }
 
 
-// Relaciones del sistema. 
 
-// Vinculación de Ciudadanos con Porteros
+// RELACIONES DEL SISTEMA
+
+// Vinculación de Ciudadanos con Orígenes
 Ref: Data_base_Padron.dni_nie_nif > Data_base_CNP.dni_nie_nif
 Ref: Data_base_Hacienda.dni_nie_nif > Data_base_CNP.dni_nie_nif
 Ref: Data_base_Asistencia_Social.dni_nie_nif > Data_base_CNP.dni_nie_nif
 
-// Las 3 Vías de Entrada al Motor de Habitabilidad
+// Relaciones de Infraestructura Física
+Ref: Data_base_Padron.ref_catastral > Data_base_Ministerio_Vivienda.ref_catastral
+Ref: Data_base_Ministerio_Vivienda.codigo_postal > Data_base_INE.codigo_postal
+
+// Vías de Entrada a la Tabla Auxiliar de Habitabilidad
 Ref: Habitabilidad_Real.dni_nie_nif > Data_base_Padron.dni_nie_nif
 Ref: Habitabilidad_Real.dni_nie_nif > Data_base_Asistencia_Social.dni_nie_nif
 Ref: Habitabilidad_Real.dni_nie_nif > Data_base_Hacienda.dni_nie_nif
 
-// Salida de Datos hacia el Resultado Final
-Ref: Base_Datos_FINAL.ref_catastral < Habitabilidad_Real.ref_catastral
-
-// Atribución Geográfica y Económica
-Ref: Base_Datos_FINAL.ref_catastral > Data_base_Ministerio_Vivienda.ref_catastral
-Ref: Data_base_INE.gamma - Base_Datos_FINAL.gamma
-Ref: Data_base_Asistencia_Social.gamma_local - Base_Datos_FINAL.gamma
+// Trazabilidad de la Salida Final Explotada
+Ref: Base_Datos_FINAL.ref_catastral > Habitabilidad_Real.ref_catastral
+Ref: Base_Datos_FINAL.dni_nie_nif > Data_base_CNP.dni_nie_nif
