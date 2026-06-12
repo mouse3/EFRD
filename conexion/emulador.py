@@ -1,6 +1,7 @@
 import sqlite3
 
-path = "outputs/base_final_efrd.db"
+print("Default: outputs/Base_Datos_MACRO.db (IGNORAR)")
+path = input("-> ")
 print(f"Conectando a: {path}")
 print("Escribe tus comandos SQL. Presiona Ctrl+C para salir.\n")
 
@@ -10,13 +11,13 @@ cursor = conn.cursor()
 try:
     while True:
         try:
-            texto_consola = input("SQL -> ").strip()
+            texto_consola = input("sql -> ").strip()
             
             if not texto_consola:
                 continue
             
             cursor.execute(texto_consola)
-            
+            print("\n\n")
             if cursor.description:
                 # Extraemos los nombres de las columnas
                 columnas = [col[0] for col in cursor.description]

@@ -1,0 +1,23 @@
+======================================================================
+ INFORME EJECUTIVO INTERNIVEL: ANÁLISIS MACROECONÓMICO AVANZADO
+======================================================================
+ Fecha del Análisis      : 2026-06-12 18:30:33
+ Base de Datos de Origen : Base_Datos_MACRO.db
+ Registros Procesados    : 50,124
+----------------------------------------------------------------------
+ SECCIÓN 1: DISTRIBUCIÓN DE COLA (PARETO)
+----------------------------------------------------------------------
+ Umbral xmin (Top 10%)    : 1,511.08
+ Muestra en Cola (n)      : 5,013
+ FACTOR ALPHA CALCULADO   : 3.9302
+ Rango Asignado           : alpha > 2.2
+ Comportamiento Matemático: Caída hiper-rápida. Sin outliers. Clase media hipertrofiada.
+ Dinámica de Capital      : g >> r (El crecimiento supera al retorno de inversión).
+ Modelo de Consumo        : Cooperativo, basado en bienes y servicios del Estado.
+ Riesgo de Colapso        : Casi nulo. Riesgo en estancamiento de productividad.
+----------------------------------------------------------------------
+ SECCIÓN 2: BRECHAS ESTRUCTURALES Y DESIGUALDAD RELATIVA
+----------------------------------------------------------------------
+ PALMA RATIO (Top 10%/Bot 40%): 2.0393 (Desigualdad intermedia)
+ RATIO S80/S20 (Quintiles)    : 10.6588
+======================================================================
