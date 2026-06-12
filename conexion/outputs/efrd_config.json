@@ -1,0 +1,7 @@
+{
+  "k_base": 711.5029334168136,
+  "sigma": 1.5,
+  "L": 0.8,
+  "tabla": "Base_Datos_MACRO",
+  "db_path": "conexion/outputs/Base_Datos_MACRO.db"
+}
