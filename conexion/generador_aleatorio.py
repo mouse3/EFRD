@@ -4,7 +4,7 @@ import string
 
 # Configuración
 DATABASE_NAME = "outputs/Base_Datos_MACRO.db"
-TOTAL_REGISTROS = 100000  # Cambia esto para generar más o menos filas
+TOTAL_REGISTROS = 100000  # Número de filas aleatorias a generar
 
 def generar_dni_nie():
     """Genera un DNI o NIE español con formato y letra de control válidos."""
@@ -25,14 +25,14 @@ def generar_dni_nie():
         return f"{numeros}{letra_final}"
 
 def crear_base_de_datos():
-    # Conectar a la base de datos (se creará el archivo si no existe)
+    # Conecta a la base de datos (se creará el archivo si no existe)
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
     
-    # Eliminar la tabla si ya existía para evitar duplicados en pruebas
+    # Elimina la tabla si ya existía para evitar duplicados en pruebas
     cursor.execute("DROP TABLE IF EXISTS Base_Datos_MACRO")
     
-    # Crear la tabla con la estructura solicitada
+    # Crea la tabla con la estructura solicitada
     cursor.execute('''
         CREATE TABLE Base_Datos_MACRO (
             ref_catastral TEXT,
@@ -72,17 +72,17 @@ def crear_base_de_datos():
         
         registros.append((ref_catastral, tipo_unit, es_habitual, dni, renta_mensual, phi, gamma))
     
-    # Insertar los datos en la tabla
+    # Inserta los datos en la tabla
     cursor.executemany('''
         INSERT INTO Base_Datos_MACRO (ref_catastral, tipo_unit, es_habitual, dni_nie_nif, renta_mensual, phi, gamma)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', registros)
     
-    # Guardar cambios y cerrar conexión
+    # Guarda cambios y cierra conexión
     conn.commit()
     print(f"¡Base de datos '{DATABASE_NAME}' creada con éxito con {TOTAL_REGISTROS} registros!")
     
-    # Mostrar una vista previa en la terminal
+    # Muestra una vista previa en la terminal
     print("\nVista previa de los datos generados (SELECT * LIMIT 10):")
     print(f"{'ref_catastral':<20} | {'tipo_unit':<10} | {'es_h':<4} | {'dni_nie_nif':<12} | {'renta':<8} | {'phi':<5} | {'gamma':<5}")
     print("-" * 75)

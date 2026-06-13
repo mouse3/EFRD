@@ -19,18 +19,18 @@ try:
             cursor.execute(texto_consola)
             print("\n\n")
             if cursor.description:
-                # Extraemos los nombres de las columnas
+                # Extrae los nombres de las columnas
                 columnas = [col[0] for col in cursor.description]
                 
                 resultados = cursor.fetchall()
                 if resultados:
-                    # Imprimimos las columnas separadas por |
+                    # Imprime las columnas separadas por |
                     print(" | ".join(columnas))
                     print("-" * (len(" | ".join(columnas)))) # Línea divisoria
                     
-                    # Imprimimos cada fila de datos
+                    # Imprime cada fila de datos
                     for fila in resultados:
-                        # Convertimos cada elemento a string para poder usar join
+                        # Convierte cada elemento a string para poder usar join
                         print(" | ".join(str(valor) for valor in fila))
                 else:
                     print("[Consulta ejecutada: No se encontraron filas]")

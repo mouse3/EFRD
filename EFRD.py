@@ -8,9 +8,7 @@ from os import path
 import os
 import json
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Constante: ratio mínimo de contribuyentes para sostenibilidad (Fleco 15)
-# ─────────────────────────────────────────────────────────────────────────────
+
 RATIO_MASA_CRITICA_MIN = 0.40   # Al menos el 40 % de la población debe ser contribuyente neto
 
 
@@ -18,7 +16,7 @@ class EFRD_Protocol_v4_1:
     def __init__(self, PIB_Y, Gini, Alpha, Sigma, Limite_L, G_op, IPC_Pi,
                  db_path, tabla_central, modo: str = "interactivo"):
         """
-        Parámetro `modo` (Fleco 8):
+        Parámetro `modo`:
           'interactivo' → pide decisión al usuario por consola (comportamiento por defecto).
           'deuda'       → asume automáticamente emitir deuda pública.
           'ajuste'      → asume automáticamente el recorte de k_base al equilibrio.
@@ -50,7 +48,7 @@ class EFRD_Protocol_v4_1:
             return
 
         # CÁLCULO DE MACROMAGNITUDES
-        # Fleco 9: paréntesis correctos → α·(Y/N)·(1-G)·π
+        # α·(Y/N)·(1-G)·π
         self.k_base = self.calcular_k_base(self.alpha, self.Y, self.N_total, self.G, self.pi)
         self.k_arope = 0.6 * self.renta_mediana_nacional
 
@@ -64,9 +62,7 @@ class EFRD_Protocol_v4_1:
         # EJECUCIÓN DE PROTOCOLOS DE SOLVENCIA Y DIGNIDAD
         self._ejecutar_logica_central()
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Fórmula canónica k_base (Fleco 9) — método estático compartido
-    # ─────────────────────────────────────────────────────────────────────────
+    # Fórmula canónica k_base — método estático compartido
     @staticmethod
     def calcular_k_base(alpha, Y, N, G, pi):
         """Fórmula canónica del suelo vitalicio base: α·(Y/N)·(1-G)·π"""
@@ -74,9 +70,7 @@ class EFRD_Protocol_v4_1:
             raise ValueError("N (población) no puede ser cero.")
         return alpha * (Y / N) * (1 - G) * pi
 
-    # ─────────────────────────────────────────────────────────────────────────
     # Fórmula canónica de x (Fleco 4) — método estático compartido
-    # ─────────────────────────────────────────────────────────────────────────
     @staticmethod
     def _calcular_x(diferencial: float, k_hogar: float) -> float:
         """
@@ -129,7 +123,7 @@ class EFRD_Protocol_v4_1:
         diferencial = renta - umbral_hogar
 
         if diferencial > 0:
-            # Fleco 4: usa _calcular_x en lugar del fallback arbitrario
+            # Usa _calcular_x en lugar del fallback arbitrario
             x = EFRD_Protocol_v4_1._calcular_x(diferencial, umbral_hogar)
             tasa = self.L * (1 - exp(-self.sigma * abs(x)))
             impuesto = diferencial * tasa
@@ -153,7 +147,7 @@ class EFRD_Protocol_v4_1:
             diferencial = renta - umbral_hogar
 
             if diferencial > 0:
-                # Fleco 4: usa _calcular_x en lugar del fallback arbitrario
+                # Usa _calcular_x en lugar del fallback arbitrario
                 x = EFRD_Protocol_v4_1._calcular_x(diferencial, umbral_hogar)
                 tasa = self.L * (1 - exp(-self.sigma * abs(x)))
                 total_recaudado += diferencial * tasa
@@ -184,7 +178,7 @@ class EFRD_Protocol_v4_1:
                 else:
                     k_max = k_mid
 
-            # Fleco 8: selección de opción según modo, sin input() en modos automáticos
+            # Selección de opción según modo, sin input() en modos automáticos
             if self.modo == "interactivo":
                 opcion = self._pedir_decision_insolvencia(k_min)
             elif self.modo == "deuda":
@@ -270,7 +264,7 @@ class EFRD_Protocol_v4_1:
             print(f"  ✓ Masa crítica sostenible.")
 
     def _finalizar_auditoria(self):
-        # Fleco 15: verificar masa crítica antes de liquidación final
+        # Verifica la masa crítica antes de liquidación final
         self._verificar_masa_critica()
 
         saldo, rec, ayu = self.simular_balance(self.k_base)
@@ -281,7 +275,7 @@ class EFRD_Protocol_v4_1:
         print(f"Estado: {'SOLVENTE' if saldo >= 0 else 'DÉFICIT (DEUDA)'}")
         print("-" * 40)
 
-        # Fleco 7: guardar parámetros en config.json para que diagnostico.py pueda usarlos
+        # Guarda parámetros en config.json para que diagnostico.py pueda usarlos
         ruta_config = os.path.join(os.path.dirname(self.db_path), "efrd_config.json")
         os.makedirs(os.path.dirname(ruta_config), exist_ok=True)
         with open(ruta_config, "w", encoding="utf-8") as f:
@@ -293,10 +287,6 @@ class EFRD_Protocol_v4_1:
                 "db_path": self.db_path
             }, f, indent=2)
         print(f"[EFRD] Configuración guardada en: {ruta_config}")
-
-
-# Fleco 5: alias de compatibilidad hacia atrás (deprecated)
-EFRD_Protocol_v3_2 = EFRD_Protocol_v4_1
 
 
 class EFRD_AdvancedVisualizer:
@@ -338,7 +328,7 @@ class EFRD_AdvancedVisualizer:
         for alpha in alphas:
             motor_tmp = deepcopy(self.motor)
             motor_tmp.alpha = alpha
-            # Fleco 9: paréntesis correctos → α·(Y/N)·(1-G)·π
+            # α·(Y/N)·(1-G)·π
             motor_tmp.k_base = EFRD_Protocol_v4_1.calcular_k_base(
                 alpha, motor_tmp.Y, motor_tmp.N_total, motor_tmp.G, motor_tmp.pi
             )
@@ -377,7 +367,7 @@ class EFRD_AnalyticVisualizer:
     def __init__(self, motor_efrd):
         self.motor = motor_efrd
 
-    # Fleco 10: propiedad de conveniencia para acceso claro a L
+    # Propiedad de conveniencia para acceso claro a L
     @property
     def _L(self):
         return self.motor.L
@@ -388,7 +378,7 @@ class EFRD_AnalyticVisualizer:
         diferencial = renta - umbral_hogar
 
         if diferencial > 0:
-            # Fleco 4: usa _calcular_x en lugar del fallback arbitrario
+            # Usa _calcular_x en lugar del fallback arbitrario
             x = EFRD_Protocol_v4_1._calcular_x(diferencial, umbral_hogar)
             tasa = self.motor.L * (1 - exp(-self.motor.sigma * abs(x)))
             impuesto = diferencial * tasa
@@ -433,7 +423,7 @@ class EFRD_AnalyticVisualizer:
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
 
-        # Fleco 18: guardar o mostrar según entorno
+        # Guarda o muestra según entorno
         if guardar:
             os.makedirs(os.path.dirname(ruta), exist_ok=True)
             plt.savefig(ruta, dpi=150, bbox_inches="tight")
@@ -483,7 +473,7 @@ class EFRD_AnalyticVisualizer:
             tipos = [self._calcular_individual(b, gamma, phi)[1] for b in ingresos_brutos]
             plt.plot(ingresos_brutos, tipos, label=rf"Hogar con $\phi$ = {phi}")
 
-        # Fleco 10: usa self._L en lugar de self.motor.L para claridad
+        # Usa self._L en lugar de self.motor.L para claridad
         plt.axhline(self._L * 100, color="red", linestyle="--",
                     label=f"Límite asíntota L ({self._L * 100:.0f}%)")
         plt.axhline(0, color="black", lw=1)
@@ -556,7 +546,7 @@ class EFRD_AnalyticVisualizer:
         try:
             with sqlite3.connect(ruta_db) as conn:
                 cursor = conn.cursor()
-                # Fleco 3: tabla dinámica via self.motor.tabla_central
+                # Tabla dinámica via self.motor.tabla_central
                 cursor.execute(
                     f"SELECT renta_mensual FROM {self.motor.tabla_central} WHERE renta_mensual IS NOT NULL"
                 )
@@ -622,7 +612,7 @@ class EFRD_AnalyticVisualizer:
         plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: format(int(x), ',')))
         plt.tight_layout()
 
-        # Fleco 18: guardar o mostrar según entorno
+        # Guarda o muestra según entorno
         if guardar:
             os.makedirs(os.path.dirname(ruta), exist_ok=True)
             plt.savefig(ruta, dpi=150, bbox_inches="tight")

@@ -9,9 +9,7 @@ from datetime import datetime
 from math import exp
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Carga de parámetros del sistema desde efrd_config.json
-# ─────────────────────────────────────────────────────────────────────────────
 def _cargar_parametros_sistema(ruta_db: str) -> dict:
     ruta_config = os.path.join(os.path.dirname(ruta_db), "efrd_config.json")
     defaults = {"k_base": 900.0, "sigma": 1.5, "L": 0.80}
@@ -48,9 +46,7 @@ def _leer_saldos_netos_reales(conn, tabla: str, k_base: float, sigma: float, L: 
     return saldos
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers estadísticos
-# ─────────────────────────────────────────────────────────────────────────────
+# Ayudas estadísticas
 def _calcular_gini(array: np.ndarray) -> float:
     """Coeficiente de Gini sobre un array de valores positivos."""
     a = np.sort(array[array > 0])
@@ -100,9 +96,7 @@ def _stats_bloque(array: np.ndarray, percentil_cola: int = 90) -> dict:
     }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Gráfica comparativa ANTES / DESPUÉS (4 paneles)
-# ─────────────────────────────────────────────────────────────────────────────
 def graficar_diagnostico_comparativo(
         ruta_db: str,
         nombre_db: str,
@@ -122,7 +116,7 @@ def graficar_diagnostico_comparativo(
         print(f"[diagnostico] Error: BD no encontrada en '{ruta_db}'")
         return
 
-    # ── Lectura de datos ──────────────────────────────────────────────────────
+    # Lectura de datos 
     try:
         params = _cargar_parametros_sistema(ruta_db)
         with sqlite3.connect(ruta_db) as conn:
@@ -152,7 +146,7 @@ def graficar_diagnostico_comparativo(
     sb = _stats_bloque(brutos, percentil_cola)
     sn = _stats_bloque(netos,  percentil_cola)
 
-    # ── Figura ────────────────────────────────────────────────────────────────
+    # Figura
     fig = plt.figure(figsize=(18, 14))
     fig.suptitle(
         f"Diagnóstico Distributivo EFRD — Antes (Bruto) vs Después (Neto)\n"
@@ -165,7 +159,7 @@ def graficar_diagnostico_comparativo(
     COLOR_NETO  = "#2E86AB"   # azul    — neto
     ALPHA       = 0.55
 
-    # ── Panel 1: Histogramas superpuestos ─────────────────────────────────────
+    # 1º Panel,  histogramas superpuestos
     ax1 = fig.add_subplot(gs[0, 0])
 
     # Rango común para comparación justa
@@ -190,7 +184,7 @@ def graficar_diagnostico_comparativo(
     ax1.grid(True, linestyle="--", alpha=0.3)
     ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{int(x):,}"))
 
-    # ── Panel 2: Boxplots lado a lado ─────────────────────────────────────────
+    # 2º Panel, boxplots lado a lado
     ax2 = fig.add_subplot(gs[0, 1])
 
     bp = ax2.boxplot(
@@ -215,7 +209,7 @@ def graficar_diagnostico_comparativo(
     ax2.grid(True, linestyle="--", alpha=0.3)
     ax2.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{int(x):,}"))
 
-    # ── Panel 3: Curva de Lorenz ──────────────────────────────────────────────
+    # 3º Panel, curva de Lorenz
     ax3 = fig.add_subplot(gs[1, 0])
 
     def _lorenz(arr):
@@ -240,7 +234,7 @@ def graficar_diagnostico_comparativo(
     ax3.legend(fontsize=9)
     ax3.grid(True, linestyle="--", alpha=0.3)
 
-    # ── Panel 4: Tabla de métricas ────────────────────────────────────────────
+    # 4º Panel, tabla de métricas
     ax4 = fig.add_subplot(gs[1, 1])
     ax4.axis("off")
 
@@ -291,7 +285,6 @@ def graficar_diagnostico_comparativo(
                           transform=ax4.transAxes, zorder=0)
     ax4.add_patch(rect)
 
-    # ── Guardar / mostrar ─────────────────────────────────────────────────────
     if guardar:
         os.makedirs(os.path.dirname(ruta_salida), exist_ok=True)
         plt.savefig(ruta_salida, format="png", bbox_inches="tight", dpi=150)
@@ -301,9 +294,8 @@ def graficar_diagnostico_comparativo(
     plt.close()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Histograma + Boxplot de saldos netos (función original, conservada)
-# ─────────────────────────────────────────────────────────────────────────────
+
 def graficar_distribucion_saldos(ruta_db, nombre_db,
                                   guardar: bool = True,
                                   ruta_salida: str = "ejemplos/salida/distribucion_saldos_histograma.png"):
@@ -374,9 +366,7 @@ def graficar_distribucion_saldos(ruta_db, nombre_db,
     plt.close()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Análisis Pareto semilogarítmico (función original, conservada)
-# ─────────────────────────────────────────────────────────────────────────────
+# Análisis Pareto semi-log (función original, conservada)
 def calcular_analizar_y_graficar_pareto_semilog(ruta_db, nombre_db, percentil_cola=90,
                                                  guardar: bool = True,
                                                  ruta_salida: str = "ejemplos/salida/grafica_diagnostico_macro_semilog.png"):
@@ -508,9 +498,7 @@ def calcular_analizar_y_graficar_pareto_semilog(ruta_db, nombre_db, percentil_co
     return alpha
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # CLI
-# ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
 

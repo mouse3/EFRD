@@ -7,16 +7,16 @@ if os.path.exists(db_output): os.remove(db_output)
 
 def ejecutar_transformacion():
     try:
-        # Conectamos a una base de datos en MEMORIA para la tabla auxiliar
+        # Conecta a una base de datos en MEMORIA para la tabla auxiliar
         conn = sqlite3.connect(':memory:') 
         cursor = conn.cursor()
 
-        # Adjuntar todas las bases de datos de entrada
+        # Adjunta todas las bases de datos de entrada
         fuentes = ['cnp', 'hacienda', 'ine', 'vivienda', 'padron', 'asistencia']
         for f in fuentes:
             cursor.execute(f"ATTACH DATABASE 'inputs/{f}.db' AS db_{f}")
 
-        # Crear tabla auxiliar (Solo existe durante la ejecución)
+        # Crea una tabla auxiliar (Solo existe durante la ejecución)
         cursor.execute("""
             CREATE TABLE Habitabilidad_Auxiliar AS
             SELECT 
@@ -35,7 +35,7 @@ def ejecutar_transformacion():
                OR (H.renta_mensual IS NOT NULL AND H.renta_mensual > 0)
         """)
 
-        # Crear Base de datos final (Archivo Físico .db) con las columnas del inquilino aplanadas
+        # Crea una Base de datos final (Archivo Físico .db) con las columnas del inquilino aplanadas
         cursor.execute(f"ATTACH DATABASE '{db_output}' AS db_final")
         cursor.execute("""
             CREATE TABLE db_final.Base_Datos_FINAL (
@@ -50,7 +50,7 @@ def ejecutar_transformacion():
             )
         """)
 
-        # PROCESAR E INSERCIÓN DIRECTA (Sin bucles de Python)
+        # Procesamiento e inserta directa (Sin bucles de Python)
         query_insercion_directa = """
         INSERT INTO db_final.Base_Datos_FINAL
         SELECT 
@@ -80,7 +80,7 @@ def ejecutar_transformacion():
         LEFT JOIN db_ine.Data_base_INE I ON V.codigo_postal = I.codigo_postal
         """
 
-        # Ejecutamos la inserción masiva directamente en SQL
+        # Ejecuta la inserción masiva directamente en SQL
         cursor.execute(query_insercion_directa)
 
         conn.commit()
