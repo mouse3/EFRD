@@ -8,7 +8,9 @@ El sistema clasifica a cada hogar en dos categorías:
 
 Una de las ventajas que proporciona es que, a diferencia del IRPF tradicional, no existen tramos fijos. Una única fórmula continua cubre a toda la población, garantizando que la transición entre receptor y contribuyente sea suave y sin saltos bruscos.
 Esto garantiza que nunca se gane menos trabajando más y que la progresividad sea infinita.
+
 ---
+
 ## 2. Arquitectura y flujo de datos 
 ``` 
 [Fuentes externas] 
