@@ -117,7 +117,7 @@ C:.
 │       workspace.json																			  |
 │																								  |
 ├───ejemplos																					  |
-│   └───salida					  <- Carpeta de resultados de diagnostico.py ───────────────┘
+│   └───salida					  <- Carpeta de resultados de diagnostico.py ─────────────────────┘
 │           distribucion_saldos_histograma.png
 │           grafica_diagnostico_macro_semilog.png
 │           ingresos_informe_pareto.txt
@@ -137,7 +137,7 @@ C:.
 │   │       Croquis_Base_datos.dbml																|
 │   │       Croquis_base_datos.pdf																|
 │   │																							|
-│   ├───inputs																		<────────┘
+│   ├───inputs																		<───────────┘
 │   │       asistencia.db
 │   │       cnp.db
 │   │       hacienda.db
