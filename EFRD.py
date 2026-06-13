@@ -170,13 +170,15 @@ class EFRD_Protocol_v4_1:
             print(f" Déficit detectado: {abs(saldo_actual):.2f} €")
 
             k_min, k_max = 0.0, self.k_base
-            for _ in range(100):
+            for _ in range(100): # 100 -> nº repeticiones
                 k_mid = (k_min + k_max) / 2
                 s_mid, _, _ = self.simular_balance(k_mid)
                 if s_mid >= 0:
                     k_min = k_mid
                 else:
                     k_max = k_mid
+
+            # PARA AÑADIR: QUE DEJE UN EXCEDENTE PARA ASEGURAR EL SUSTENTO DEL SISTEMA Y OTRAS INSTITUCIONES DEL ESTADO.
 
             # Selección de opción según modo, sin input() en modos automáticos
             if self.modo == "interactivo":
