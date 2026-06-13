@@ -1,4 +1,5 @@
-## 1. Visión general del sistema EFRD (Equilibrio Fiscal y Resiliencia Dinámica) 
+# README, Sistema EFRD (Equilibrio Fiscal y Resiliencia Dinámica)
+## 1. Visión general
 
 es un motor de redistribución de renta que simula un sistema fiscal donde **cada hogar tiene un umbral de dignidad personalizado** (`k_hogar`) basado en su composición familiar y el coste de vida de su municipio.
 El sistema clasifica a cada hogar en dos categorías: 
