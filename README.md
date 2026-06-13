@@ -340,7 +340,7 @@ Los valores de respaldo se pueden actualizar anualmente editando `datos_referenc
 
 --- 
 ## 10. Esquema de bases de datos 
-Para información más detallada: ![[Croquis_base_datos.pdf]]
+Para información más detallada: ![[conexion/Croquis_base_datos.pdf]]
 ### 10.1 `Base_Datos_MACRO.db` — tabla `Base_Datos_MACRO
 `
 Tabla de entrada. Una fila por persona censada. Generada por `conexion/transformador.py`
