@@ -48,6 +48,8 @@ ejemplos/salida/*.png + *.txt         ← gráficas e informes conexion/outputs/
 
  ---
 ## 3. Fundamento matemático 
+
+Para visualizar este apartado de una manera gráfica, visitar (https://www.desmos.com/calculator/8nxnfzbpfo?lang=es)
 ### 3.1 Suelo vitalicio base (`k_base`) 
 ``` 
 k_base = α · (Y / N) · (1 − G) · π 
