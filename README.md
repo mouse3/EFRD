@@ -133,7 +133,7 @@ C:.
 │   │   generador_aleatorio.py  <- Genera Base_Datos_Macro.db con datos aleatorios (sin basarte en inputs/)
 │   │   transformador.py  		 <- (externo y realista) genera Base_Datos_MACRO.db basado en inputs/
 │   │																							|
-│   ├───Croquis																				|
+│   ├───Croquis																					|
 │   │       Croquis_Base_datos.dbml																|
 │   │       Croquis_base_datos.pdf																|
 │   │																							|
