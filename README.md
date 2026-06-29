@@ -507,5 +507,7 @@ Entonces, ejemplificando la respuesta: Un sin hogar que gane 0€ se le donará 
 Los datos de entrada han de actualizarse anualmente, tales como el índice Gini y el IPC. Además, es importante que el PIB sea lo más reciente posible.
 
 Para visualizar más detalles, entre en 'Documentacion/propuesta técnica.md'
-## 18. Licencia
+## 18. Véase también
+El gráfico que describe este sistema: 
+## 19. Licencia
 Este -ambicioso- proyecto está bajo la licencia **GNU General Public License v3.0 (GPL-3.0)**. Esto garantiza que el algoritmo permanezca abierto, auditable y que cualquier cambio o mejora sea compartida y de libre acceso con la comunidad. Esto garantiza esa "Caja de Cristal", es decir, garantiza que la transparencia se mantenga aún habiendo realizado cambios.
