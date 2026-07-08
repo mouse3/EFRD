@@ -433,20 +433,7 @@ El motor ejecuta dos protocolos en secuencia al arrancar.
 
 **Comportamiento:** solo se activa en modo `interactivo`. En modos automáticos, la política es conservadora (no se aumenta el gasto sin intervención humana explícita). 
 
---- 
-## 13. Sistema de auditoría de fraude 
-
-El estado `AUDITORÍA` es una **señal, no un bloqueo**. El hogar sigue recibiendo su subsidio. Lo que se marca es la necesidad de revisión manual posterior. 
-
-**Criterios de marcado (AND lógico):** 
-1. Referencia catastral real (no virtual/sintética) 
-2. `renta_mensual < 100 €/mes` 3. `gamma > 1.3` (zona de coste de vida alto) 
-**Razonamiento:** una persona que declara ingresos prácticamente nulos pero vive en una zona cara (Madrid, Barcelona, etc.) presenta una inconsistencia estadística. Puede tener renta no declarada, patrimonio no computado, o simplemente ser una situación límite legítima (desempleo reciente, herencia de vivienda). El sistema no puede saberlo, por lo que delega la decisión a revisión humana. 
-
-**En la tabla `liquidaciones_hogares`:** si algún miembro del hogar tiene estado `AUDITORÍA`, el estado del hogar completo se eleva a `AUDITORÍA` (prioridad máxima en el CASE). 
-
---- 
-## 14. Ejecución y argumentos CLI 
+## 13. Ejecución y argumentos CLI 
 ### `main.py` 
 ```bash 
 python main.py [--gop VALOR_EUR] [--modo {interactivo,deuda,ajuste,test}] 
@@ -470,7 +457,7 @@ python diagnostico.py --db /ruta/custom.db --tabla MiTabla
 ``` 
 --- 
 
-## 15. FAQs
+## 14. FAQs
 ### ¿Se suma $k_{base}$ con $k_{hogar}$?
 No. Hacerlo sería un error de duplicidad muy apreciable que quebraría el sistema en la primera iteración. 
 La relación es de jerarquía y transformación, no de suma:
@@ -502,12 +489,12 @@ Entonces, ejemplificando la respuesta: Un sin hogar que gane 0€ se le donará 
 | ciclo_id               | Identificador de ejecución para soporte multicíclo. Permite conservar histórico de varias simulaciones en la misma BD.                |
 | Ref. catastral virtual | Referencia sintética (prefijos VIRTUAL_, TEST_, etc. ) usada para hogares sin domicilio catastrable. Excluida del detector de fraude. |
 
-## 17. Téngase en cuenta
+## 16. Téngase en cuenta
 
 Los datos de entrada han de actualizarse anualmente, tales como el índice Gini y el IPC. Además, es importante que el PIB sea lo más reciente posible.
 
 Para visualizar más detalles, entre en 'Documentacion/propuesta técnica.md'
-## 18. Véase también
+## 17. Véase también
 El gráfico que describe este sistema: 
-## 19. Licencia
+## 18. Licencia
 Este -ambicioso- proyecto está bajo la licencia **GNU General Public License v3.0 (GPL-3.0)**. Esto garantiza que el algoritmo permanezca abierto, auditable y que cualquier cambio o mejora sea compartida y de libre acceso con la comunidad. Esto garantiza esa "Caja de Cristal", es decir, garantiza que la transparencia se mantenga aún habiendo realizado cambios.
