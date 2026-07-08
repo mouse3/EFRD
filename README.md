@@ -3,7 +3,7 @@
 
 Es un motor de redistribución de renta que simula un sistema fiscal donde **cada hogar tiene un umbral de dignidad personalizado** (`k_hogar`) basado en su composición familiar y el coste de vida de su municipio.
 El sistema clasifica a cada hogar en dos categorías: 
-- **Contribuyente:** su renta supera `k_hogar`. Paga una cuota progresiva y asintótica sobre el excedente. Nunca pierde más del `L × 100%` de su renta (por defecto 80%). 
+- **Contribuyente:** su renta supera `k_hogar`. Paga una cuota progresiva y asintótica sobre el excedente. Nunca pierde más del `L × 100%` de su renta (por defecto 60%). 
 - **Receptor:** su renta no alcanza `k_hogar`. El Estado le complementa hasta ese umbral mediante un subsidio.
 
 Una de las ventajas que proporciona es que, a diferencia del IRPF tradicional, no existen tramos fijos. Una única fórmula continua cubre a toda la población, garantizando que la transición entre receptor y contribuyente sea suave y sin saltos bruscos.
