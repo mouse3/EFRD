@@ -1,4 +1,6 @@
 from math import exp, ceil
+import matplotlib
+matplotlib.use('Agg') # Fuerza renderizado en memoria para guardar a PNG
 import matplotlib.pyplot as plt
 from numpy import zeros, linspace
 from copy import deepcopy
