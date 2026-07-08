@@ -52,7 +52,7 @@ ejemplos/salida/*.png + *.txt         ← gráficas e informes conexion/outputs/
 Para visualizar este apartado de una manera gráfica, visitar: [link](https://www.desmos.com/calculator/8nxnfzbpfo?lang=es)
 ### 3.1 Suelo vitalicio base (`k_base`) 
 ``` 
-k_base = α · (Y / N) · (1 − G) · π 
+k_base = α · (Y / N) · G · π 
 ``` 
 
 | Variable       | Significado                                    | Fuente                                   |
@@ -269,11 +269,11 @@ Si es `None`, se trunca la tabla (ejecución simple).
 Agrega `resultados_ciudadanos` por `ref_catastral` y produce la tabla final `liquidaciones_hogares`. 
 **Tratamiento semántico de hogares sin renta:** 
 
-| Situación                       | renta_neta_hogar | subsidio_estatal | tipo_efectivo_pct                       |     |
-| ------------------------------- | ---------------- | ---------------- | --------------------------------------- | --- |
-| Contribuyente (renta > k_hogar) | $renta-cuota$    | 0                | $\frac{cuota}{renta}\times 100$         |     |
-| Receptor con renta > 0          | $renta + cuota$  | 0                | $\frac{cuota}{renta} \cdot 100$ ($< 0$) |     |
-| Receptor con renta = 0          | 0                | $cuota$          | NULL                                    |     |
+| Situación                             | renta_neta_hogar | subsidio_estatal | tipo_efectivo_pct                          |
+| ------------------------------------- | ---------------- | ---------------- | ------------------------------------------ |
+| Contribuyente $(renta > k_{hogar})$   | $renta-cuota$    | 0                | $\frac{cuota}{bruta}\times 100$            |
+| Receptor con $0<renta \leq k_{hogar}$ | $k_hogar$        | $cuota_{hogar}$  | $\frac{cuota}{renta} \cdot 100$ (negativo) |
+| Receptor con renta = 0                | $k_hogar$        | $cuota_{hogar}$  | NULL                                       |
 
 El `NULL` en `tipo_efectivo_pct` cuando `renta = 0` es semánticamente correcto: no existe base imponible sobre la que calcular un porcentaje. Un valor `0%` sería engañoso (implicaría que tienen renta y no pagan nada). 
 ### 7.3 Modo headless 
@@ -310,7 +310,7 @@ Genera también un informe `.txt` en `ejemplos/salida/ingresos_informe_pareto.tx
 ### 8.3 `graficar_distribucion_saldos()` 
 
 Histograma de frecuencias + boxplot horizontal de los saldos netos reales (filtrando saldos ≤ 0). 
-![[Diagnostico_saldos.png]]
+![[Diagnostico_Distribucion_Saldos.png]]
 
 ### 8.4 Carga de parámetros 
 
@@ -456,7 +456,17 @@ La fórmula que transforma $k_{base}$ en $k_{hogar}$ es: $$k_{hogar}=k_{base}\cd
 Donde se puede visualizar que tanto $\phi$ (circunstancias familiares del hogar) y $\gamma$ (coste de vida del lugar donde se habita) son directamente proporcionales a $k_{base}$
 
 Entonces, ejemplificando la respuesta: Un sin hogar que gane 0€ se le donará un $k_{hogar}$ correspondiente a sus circunstancias.
-## 16. Glosario de términos 
+## 16. Anexo matemático
+
+En el análisis gráfico que se visualiza en el siguiente [link](https://www.desmos.com/calculator/8nxnfzbpfo?lang=es) se observa que pasado un valor de variable $\sigma$, la gráfica tiene una bajada (la derivada es 0), esto implicaría que alguien acabaría perdiendo más dinero en neto si gana más en bruto pasado un punto. Para esto extraeremos la derivada de $n$, definida como 
+$$n=x-(x-k_{hogar})L(1-e^{(-s||\frac{x-k_hogar}{k_{hogar}}|)})$$
+Y su derivada es definida por la expresión:
+$$\frac{dn}{dx}\equiv n'=1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)$$
+Despejando para $\sigma$: $$$$
+Despejando para $L$:
+$$n'\leq0 \therefore 0\geq{1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}$$
+$$\text{ergo,} \space\space\space L\geq {\frac{1}{\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar}) \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}}$$
+## 17. Glosario de términos 
 
 | Término                | Definición                                                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -477,12 +487,12 @@ Entonces, ejemplificando la respuesta: Un sin hogar que gane 0€ se le donará 
 | ciclo_id               | Identificador de ejecución para soporte multicíclo. Permite conservar histórico de varias simulaciones en la misma BD.                |
 | Ref. catastral virtual | Referencia sintética (prefijos VIRTUAL_, TEST_, etc. ) usada para hogares sin domicilio catastrable. Excluida del detector de fraude. |
 
-## 16. Téngase en cuenta
+## 18. Téngase en cuenta
 
 Los datos de entrada han de actualizarse anualmente, tales como el índice Gini y el IPC. Además, es importante que el PIB sea lo más reciente posible.
 
 Para visualizar más detalles, entre en 'Documentacion/propuesta técnica.md'
-## 17. Véase también
+## 19. Véase también
 El gráfico que describe este sistema: [link](https://www.desmos.com/calculator/8nxnfzbpfo?lang=es)
-## 18. Licencia
+## 19. Licencia
 Este -ambicioso- proyecto está bajo la licencia **GNU General Public License v3.0 (GPL-3.0)**. Esto garantiza que el algoritmo permanezca abierto, auditable y que cualquier cambio o mejora sea compartida y de libre acceso con la comunidad. Esto garantiza esa "Caja de Cristal", es decir, garantiza que la transparencia se mantenga aún habiendo realizado cambios.

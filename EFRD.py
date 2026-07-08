@@ -63,7 +63,7 @@ class EFRD_Protocol_v4_1:
 
     @staticmethod
     def calcular_k_base(alpha, Y, N_muestra, G, pi):
-        """Fórmula canónica del suelo vitalicio base: α·(Y/N)·(1-G)·π ajustado a mes."""
+        """Fórmula canónica del suelo vitalicio base: α·(Y/N)·(G)·π ajustado a mes."""
         if N_muestra == 0:
             raise ValueError("N (población) no puede ser cero.")
         
@@ -72,7 +72,7 @@ class EFRD_Protocol_v4_1:
         N_real = N_muestra if N_muestra > 40000000 else 48060000
         pib_per_capita_anual = Y / N_real
         
-        k_base_anual = alpha * pib_per_capita_anual * (1 - G) * pi
+        k_base_anual = alpha * pib_per_capita_anual * G * pi
         
         # CORRECCIÓN 2: Escalar a mensual para cuadrar con la renta de la DB
         k_base_mensual = k_base_anual / 12.0
