@@ -483,6 +483,6 @@ Los datos de entrada han de actualizarse anualmente, tales como el índice Gini 
 
 Para visualizar más detalles, entre en 'Documentacion/propuesta técnica.md'
 ## 17. Véase también
-El gráfico que describe este sistema: 
+El gráfico que describe este sistema: [link](https://www.desmos.com/calculator/8nxnfzbpfo?lang=es)
 ## 18. Licencia
 Este -ambicioso- proyecto está bajo la licencia **GNU General Public License v3.0 (GPL-3.0)**. Esto garantiza que el algoritmo permanezca abierto, auditable y que cualquier cambio o mejora sea compartida y de libre acceso con la comunidad. Esto garantiza esa "Caja de Cristal", es decir, garantiza que la transparencia se mantenga aún habiendo realizado cambios.
