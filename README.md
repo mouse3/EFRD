@@ -460,10 +460,12 @@ Entonces, ejemplificando la respuesta: Un sin hogar que gane 0€ se le donará 
 
 En el análisis gráfico que se visualiza en el siguiente [link](https://www.desmos.com/calculator/8nxnfzbpfo?lang=es) se observa que pasado un valor de variable $\sigma$, la gráfica tiene una bajada (la derivada es 0), esto implicaría que alguien acabaría perdiendo más dinero en neto si gana más en bruto pasado un punto. Para esto extraeremos la derivada de $n$, definida como 
 $$n=x-(x-k_{hogar})L(1-e^{(-s||\frac{x-k_hogar}{k_{hogar}}|)})$$
+### Derivada de $n(x)$:
 Y su derivada es definida por la expresión:
 $$\frac{dn}{dx}\equiv n'=1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)$$
 
-Despejando para $L$:
+
+#### Despejando para $L$:
 $$n'\leq0 \therefore 0\geq{1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}$$
 $$\text{ergo,} \space\space\space L\geq {\frac{1}{\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar}) \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}}$$
 ## 17. Glosario de términos 
