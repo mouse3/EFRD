@@ -255,18 +255,6 @@ sino:
 Si es `None`, se trunca la tabla (ejecución simple). 
 
 **Migración de esquema:** al arrancar comprueba el número de columnas de `resultados_ciudadanos` con `PRAGMA table_info`. Si detecta el esquema antiguo (≠ 10 columnas), lo elimina y lo recrea. Evita errores `sqlite3.OperationalError` en BDs heredadas. 
-### 6.2 Detección de fraude potencial (Fleco 13) 
-```python 
-UMBRAL_GAMMA_SOSPECHOSO = 1.3 # zona de alto coste de vida 
-UMBRAL_RENTA_CERO = 100 # EUR/mes 
-PREFIJOS_REF_VIRTUAL = ("VIRTUAL_", "SIN_REF", "TEST_", "MOCK_") 
-``` 
-Un hogar se marca como `AUDITORÍA` si cumple **las tres condiciones**: 
-1. La ref. catastral es real (no empieza por ninguno de los prefijos virtuales). 
-2. `renta < 100 €/mes` (declaración prácticamente cero). 
-3. `gamma > 1.3` (vive en zona de coste de vida alto). 
-El estado `AUDITORÍA` **no bloquea el subsidio**: el hogar sigue recibiéndolo. Solo lo señala para revisión manual posterior. Las referencias virtuales quedan excluidas explícitamente porque no corresponden a contribuyentes reales. 
---- 
 ## 7. Módulo main.py — Orquestador y liquidaciones 
 ### 7.1 Flujo de ejecución 
 ``` 
@@ -395,7 +383,7 @@ Tabla de salida final. Una fila por hogar. Generada por `main.py`.
 | Alpha     | 0.05              | Fracción del PIB per cápita para k_base. Subir $\alpha$ implica más subsidios y, por ende, más carga fiscal |
 | Gini      | 0.33              | Desigualdad estructural. Solo modifica k_base en el arranque                                                |
 | Sigma     | 1.5               | Velocidad de progresividad. $\sigma$ alto implica que los contribuyentes de renta media paguen más          |
-| Limite_L  | 0.6               | Techo de la tasa efectiva. Nadie paga más del 80% aunque tenga renta infinita                               |
+| Limite_L  | 0.6               | Techo de la tasa efectiva. Nadie paga más del 60% aunque tenga renta infinita                               |
 | IPC_Pi    | 1.034             | Factor de inflación. Sube k_base para mantener poder adquisitivo                                            |
 
 ### Constantes de `simulacion.py` 
