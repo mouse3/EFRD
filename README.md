@@ -472,7 +472,9 @@ $$\frac{dn}{dx}\equiv n'=1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}
 
 $$n'\leq0 \therefore 0\geq{1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}$$
 
-$$\text{ergo,} \space\space\space L\geq {\frac{1}{\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar}) \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}}$$
+$$\text{ergo,} \space\space\space L\geq {\frac{1}{\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar}) \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}} \space\space\space\square$$
+
+
 ## 17. Glosario de términos 
 
 | Término                | Definición                                                                                                                            |
