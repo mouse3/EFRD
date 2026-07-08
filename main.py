@@ -59,85 +59,106 @@ Columnas:
   renta_bruta_hogar  — renta propia del hogar (siempre >= 0)
   cuota_hogar        — a ingresar en Hacienda (+) o a recibir del Estado (-)
   renta_neta_hogar   — renta_bruta - cuota  (contribuyentes)
-                       renta_bruta + |cuota| (receptores con renta > 0)
-                       0 cuando renta_bruta = 0  (el subsidio va a subsidio_estatal)
-  subsidio_estatal   — aportación pura del Estado cuando renta_bruta = 0
+                       k_hogar (receptores: garantiza suelo de dignidad)
+  subsidio_estatal   — aportación pura del Estado (valor absoluto de la cuota negativa)
   tipo_efectivo_pct  — cuota / renta_bruta * 100  (NULL si renta_bruta = 0)
   estado_hogar       — CONTRIBUYENTE | RECEPTOR | AUDITORÍA | NEUTRO
 """
 def generar_liquidaciones(path_origen: str, path_destino: str) -> int:
     with sqlite3.connect(path_origen) as conn_src:
         cursor = conn_src.cursor()
+        # SQL solo agrupa los datos brutos por vivienda de forma eficiente
         cursor.execute("""
             SELECT
                 ref_catastral,
-
-                MAX(SUM(renta_total), 0)            AS renta_bruta_hogar,
-
-                SUM(cuota)                          AS cuota_hogar,
-
-                -- Neto = renta propia tras cuota; 0 cuando no hay renta propia
-                CASE
-                    WHEN SUM(renta_total) > 0
-                    THEN SUM(renta_total) - SUM(cuota)
-                    ELSE 0
-                END                                 AS renta_neta_hogar,
-
-                -- Subsidio puro: solo cuando el hogar no tiene renta propia
-                CASE
-                    WHEN SUM(renta_total) <= 0 AND SUM(cuota) < 0
-                    THEN ABS(SUM(cuota))
-                    ELSE 0
-                END                                 AS subsidio_estatal,
-
-                -- Tipo efectivo: sin base imponible no tiene sentido calcularlo
-                CASE
-                    WHEN SUM(renta_total) > 0
-                    THEN ROUND(SUM(cuota) / SUM(renta_total) * 100, 4)
-                    ELSE NULL
-                END                                 AS tipo_efectivo_pct,
-
-                -- AUDITORÍA tiene prioridad sobre el signo de la cuota
-                CASE
-                    WHEN MAX(estado) = 'AUDITORÍA'  THEN 'AUDITORÍA'
-                    WHEN SUM(cuota)  >  0            THEN 'CONTRIBUYENTE'
-                    WHEN SUM(cuota)  <  0            THEN 'RECEPTOR'
-                    ELSE 'NEUTRO'
-                END                                 AS estado_hogar,
-
-                -- phi_total y gamma son iguales para todos los miembros del hogar;
-                -- MAX() los extrae sin necesidad de un subquery adicional.
-                MAX(phi_total)                      AS phi_total,
-                MAX(gamma)                          AS gamma
-
+                SUM(renta_total)  AS renta_bruta_raw,
+                SUM(cuota)        AS cuota_hogar,
+                MAX(phi_total)    AS phi_total,
+                MAX(gamma)        AS gamma
             FROM resultados_ciudadanos
             WHERE ref_catastral IS NOT NULL AND ref_catastral != ''
             GROUP BY ref_catastral
             ORDER BY cuota_hogar DESC
         """)
-        filas = cursor.fetchall()
+        filas_raw = cursor.fetchall()
 
+    # Procesamiento de las Reglas de Negocio en Python
+    filas = []
+    for row in filas_raw:
+        ref_catastral, renta_bruta_raw, cuota_hogar, phi_total, gamma = row
+        
+        # Asegurar consistencia de ingresos mínimos
+        renta_bruta_hogar = max(renta_bruta_raw, 0.0)
+        
+        # Calcular el umbral de dignidad dinámico usando la instancia global 'motor'
+        k_hogar = motor.k_base * phi_total * gamma
+        
+        # ---------------------------------------------------------------------
+        # SOLUCIÓN 1º ERROR: Lógica contable unificada y Suelo de Dignidad Real
+        # ---------------------------------------------------------------------
+        if cuota_hogar < 0:  # RECEPTOR (Cubre tanto renta > 0 como renta = 0)
+            renta_neta_hogar = k_hogar         # Suelo vitalicio garantizado
+            subsidio_estatal = abs(cuota_hogar) # Gasto real para las arcas públicas
+            tipo_efectivo_pct = round((cuota_hogar / renta_bruta_hogar) * 100, 4) if renta_bruta_hogar > 0 else None
+            estado_hogar = 'RECEPTOR'
+            
+        elif cuota_hogar > 0:  # CONTRIBUYENTE
+            renta_neta_hogar = renta_bruta_hogar - cuota_hogar
+            subsidio_estatal = 0.0
+            tipo_efectivo_pct = round((cuota_hogar / renta_bruta_hogar) * 100, 4)
+            estado_hogar = 'CONTRIBUYENTE'
+            
+        else:  # NEUTRO (Cuota exacta a cero)
+            renta_neta_hogar = renta_bruta_hogar
+            subsidio_estatal = 0.0
+            tipo_efectivo_pct = 0.0 if renta_bruta_hogar > 0 else None
+            estado_hogar = 'NEUTRO'
+            
+        # ---------------------------------------------------------------------
+        # SOLUCIÓN 2º ERROR: Sistema de Auditoría Hogar-Céntrico sin Falsos Positivos
+        # ---------------------------------------------------------------------
+        es_ref_virtual = any(ref_catastral.startswith(pref) for pref in ["VIRTUAL_", "SIN_REF", "TEST_", "MOCK_"])
+        
+        if estado_hogar == 'RECEPTOR' and not es_ref_virtual:
+            # Alerta si los ingresos de TODO EL HOGAR son < 15% de su mínimo vital en zona cara
+            if renta_bruta_hogar < (k_hogar * 0.15) and gamma > 1.3:
+                estado_hogar = 'AUDITORÍA'
+                
+        # Empaquetamos respetando el orden exacto de la base de datos destino
+        filas.append((
+            ref_catastral,
+            renta_bruta_hogar,
+            cuota_hogar,
+            renta_neta_hogar,
+            subsidio_estatal,
+            tipo_efectivo_pct,
+            estado_hogar,
+            phi_total,
+            gamma
+        ))
+
+    # Escritura en la base de datos de liquidaciones
     os.makedirs(os.path.dirname(path_destino), exist_ok=True)
     with sqlite3.connect(path_destino) as conn_dst:
         conn_dst.execute("DROP TABLE IF EXISTS liquidaciones_hogares")
         conn_dst.execute("""
             CREATE TABLE liquidaciones_hogares (
                 ref_catastral      TEXT PRIMARY KEY,
-                renta_bruta_hogar  REAL,  -- renta propia del hogar (€/mes, >= 0)
-                cuota_hogar        REAL,  -- a ingresar (+) o recibir (-) del Estado (€/mes)
-                renta_neta_hogar   REAL,  -- renta disponible tras cuota (0 si bruta era 0)
-                subsidio_estatal   REAL,  -- aportación pura del Estado cuando bruta = 0 (€/mes)
-                tipo_efectivo_pct  REAL,  -- cuota/bruta*100; NULL si sin base imponible
-                estado_hogar       TEXT,  -- CONTRIBUYENTE | RECEPTOR | AUDITORÍA | NEUTRO
-                phi_total          REAL,  -- multiplicador de composición familiar (k_base × phi × gamma = k_hogar)
-                gamma              REAL   -- índice de coste de vida del municipio
+                renta_bruta_hogar  REAL,
+                cuota_hogar        REAL,
+                renta_neta_hogar   REAL,
+                subsidio_estatal   REAL,
+                tipo_efectivo_pct  REAL,
+                estado_hogar       TEXT,
+                phi_total          REAL,
+                gamma              REAL
             )
         """)
         conn_dst.executemany(
             "INSERT INTO liquidaciones_hogares VALUES (?,?,?,?,?,?,?,?,?)", filas
         )
 
-    # Índices: 0=ref, 1=bruta, 2=cuota, 3=neta, 4=subsidio, 5=tipo, 6=estado, 7=phi, 8=gamma
+    # Las métricas se mantienen intactas ya que preservamos los índices de las tuplas
     contribuyentes  = sum(1 for f in filas if f[6] == "CONTRIBUYENTE")
     receptores      = sum(1 for f in filas if f[6] == "RECEPTOR")
     auditoria       = sum(1 for f in filas if f[6] == "AUDITORÍA")

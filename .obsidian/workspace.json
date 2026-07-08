@@ -197,6 +197,9 @@
   },
   "active": "0c4b8e41814c6b98",
   "lastOpenFiles": [
+    "conexion/outputs/Liquidaciones_EFRD.db-journal",
+    "conexion/outputs/Base_Datos_MACRO.db-journal",
+    "conexion/crear_dbs_ejemplo.py",
     "README.md",
     "Screenshots/Mapa_Calor_sist_redistributivo.png",
     "Screenshots/Impacto_sigma_progresividad.png",
@@ -208,7 +211,6 @@
     "Screenshots/Diagnostico_saldos.png",
     "Documentacion/Propuesta técnica.md",
     "README][1.Visi.md",
-    "conexion/outputs/Base_Datos_MACRO.db-journal",
     "Analisis/Cadenas-Markov/ANÉXO TÉCNICO.md",
     "build/main",
     "build",

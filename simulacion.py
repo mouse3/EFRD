@@ -76,6 +76,10 @@ def procesar_simulacion_efrd(motor, db_path: str, tabla_origen: str, ciclo_id: s
                 cuota  = diferencial                    # negativo → subsidio
                 neto   = renta + abs(diferencial)
                 tipo_e = -(abs(diferencial) / renta * 100) if renta > 0 else -100
+                # -------------------------------------------------------------
+                # ¡SOLUCIÓN AL ERROR! Inicializamos la variable faltante
+                # -------------------------------------------------------------
+                estado = "RECEPTOR" 
 
             filas.append((
                 ciclo_id,
