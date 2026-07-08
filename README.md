@@ -78,7 +78,7 @@ k_hogar = k_base × φ × γ
 Para un hogar con `renta > k_hogar`: 
 ``` 
 x = (renta − k_hogar) / k_hogar     ← exceso relativo de renta 
-tasa = L · (1 − e^(−σ · x))         ← tasa efectiva (asintótica) 
+tasa = L · (1 − e^(−σ · |x|))         ← tasa efectiva (asintótica) 
 cuota = (renta − k_hogar) · tasa 
 neto = renta − cuota 
 ``` 
