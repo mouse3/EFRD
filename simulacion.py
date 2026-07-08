@@ -6,15 +6,7 @@ Calcula la cuota individual de cada ciudadano y escribe los resultados en la BD.
 import sqlite3
 from math import exp
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Fleco 13: parámetros de detección de fraude potencial
-# ─────────────────────────────────────────────────────────────────────────────
-UMBRAL_GAMMA_SOSPECHOSO = 1.3   # coste de vida alto
-UMBRAL_RENTA_CERO       = 100   # EUR/mes — por debajo se considera "declaración cero"
-
 # Prefijos que identifican referencias catastrales sintéticas/virtuales.
-# Estas refs no proceden del Catastro real y no pueden ser objeto de inspección
-# de fraude fiscal, por lo que quedan excluidas del Fleco 13.
 PREFIJOS_REF_VIRTUAL = ("VIRTUAL_", "SIN_REF", "TEST_", "MOCK_")
 
 
@@ -24,24 +16,6 @@ def _es_ref_virtual(ref_catastral: str) -> bool:
         return True
     ref_upper = ref_catastral.upper()
     return any(ref_upper.startswith(p) for p in PREFIJOS_REF_VIRTUAL)
-
-
-def _detectar_fraude_potencial(renta: float, gamma: float, ref_catastral: str) -> bool:
-    """
-    Fleco 13: marca un hogar para revisión manual si declara renta muy baja
-    pero vive en una zona de coste de vida elevado.
-
-    Condiciones necesarias (todas deben cumplirse):
-      1. La referencia catastral es real (no virtual/sintética).
-      2. La renta declarada está por debajo del umbral mínimo.
-      3. El coste de vida del municipio (gamma) es alto.
-
-    No bloquea el subsidio; lo pone en cola de auditoría.
-    """
-    if _es_ref_virtual(ref_catastral):
-        return False
-    return renta < UMBRAL_RENTA_CERO and gamma > UMBRAL_GAMMA_SOSPECHOSO
-
 
 def procesar_simulacion_efrd(motor, db_path: str, tabla_origen: str, ciclo_id: str = None):
     """
@@ -103,12 +77,6 @@ def procesar_simulacion_efrd(motor, db_path: str, tabla_origen: str, ciclo_id: s
                 neto   = renta + abs(diferencial)
                 tipo_e = -(abs(diferencial) / renta * 100) if renta > 0 else -100
 
-                # Fleco 13: solo aplica a refs reales
-                if _detectar_fraude_potencial(renta, gamma, ref_catastral):
-                    estado = "AUDITORÍA"
-                else:
-                    estado = "RECEPTOR"
-
             filas.append((
                 ciclo_id,
                 ref_catastral,
@@ -124,6 +92,6 @@ def procesar_simulacion_efrd(motor, db_path: str, tabla_origen: str, ciclo_id: s
         n_virtual   = sum(1 for f in filas if _es_ref_virtual(f[1] or ""))
         print(f"[simulacion] {len(filas):,} hogares procesados → tabla '{tabla_destino}'")
         if n_virtual:
-            print(f"[simulacion]   {n_virtual:,} hogares con ref. virtual (excluidos de auditoría de fraude)")
+            print(f"[simulacion]   {n_virtual:,} hogares con ref. virtual")
         if n_auditoria:
             print(f"[simulacion] ⚠ {n_auditoria:,} hogares marcados como AUDITORÍA (renta baja en zona de alto coste)")
