@@ -395,7 +395,7 @@ Tabla de salida final. Una fila por hogar. Generada por `main.py`.
 | Alpha     | 0.05              | Fracción del PIB per cápita para k_base. Subir $\alpha$ implica más subsidios y, por ende, más carga fiscal |
 | Gini      | 0.33              | Desigualdad estructural. Solo modifica k_base en el arranque                                                |
 | Sigma     | 1.5               | Velocidad de progresividad. $\sigma$ alto implica que los contribuyentes de renta media paguen más          |
-| Limite_L  | 0.6               | Techo de la tasa efectiva. Nadie paga más del 80$ aunque tenga renta infinita                               |
+| Limite_L  | 0.6               | Techo de la tasa efectiva. Nadie paga más del 80% aunque tenga renta infinita                               |
 | IPC_Pi    | 1.034             | Factor de inflación. Sube k_base para mantener poder adquisitivo                                            |
 
 ### Constantes de `simulacion.py` 
