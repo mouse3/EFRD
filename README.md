@@ -205,7 +205,7 @@ EFRD_Protocol_v4_1(
 | calcular_cuota_hogar(renta, adultos, hijos, gamma) | Calcula una cuota para un hogar hipotético. Usado por los visualizadores.    |
 
 ### 5.2 Protocolo de solvencia (búsqueda binaria) 
-Cuando `simular_balance(k_base) < 0`, el motor ejecuta 100 iteraciones de búsqueda binaria entre `[0, k_base]` para encontrar el `k_equilibrio` máximo que mantiene el sistema solvente. La precisión tras 100 iteraciones es `k_base / 2^100`, prácticamente irrelevante en la práctica. 
+Cuando `simular_balance(k_base) < 0`, el motor ejecuta 25 iteraciones de búsqueda binaria entre `[0, k_base]` para encontrar el `k_equilibrio` máximo que mantiene el sistema solvente. La precisión tras 25 iteraciones es `k_base / 2^25`, prácticamente irrelevante en la práctica. 
 ### 5.3 Protocolo de dignidad (PSD) 
 Si `k_base < k_arope`, el motor comprueba si subir hasta `k_arope` seguiría siendo solvente. Si sí, ofrece activarlo (solo en modo interactivo). Si el Protocolo de Solvencia ya ajustó `k_base` a la baja, el PSD queda bloqueado para evitar contradicción lógica. 
 ### 5.4 Protocolo de Masa Crítica 
