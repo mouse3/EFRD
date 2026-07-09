@@ -63,7 +63,7 @@ k_base = α · (Y / N) · G · π
 | G              | Coeficientes de Gini                           | Parámetro de política (0.33 por defecto) |
 | $\pi$ (IPC_Pi) | Factor IPC = 1+tasa de inflación               | INE                                      |
 
-El factor `(1 − G)` hace que **a mayor desigualdad, menor sea el suelo base** que el sistema puede garantizar de forma sostenible, reflejando que una economía más desigual tiene menos renta distribuible de forma eficiente. 
+El factor `G` hace que **a mayor desigualdad, mayor sea el suelo base** que el sistema puede garantizar, forzando a que una economía más desigual tengs más renta distribuible de forma eficiente. 
 ### 3.2 Umbral del hogar (`k_hogar`) 
 ``` 
 k_hogar = k_base × φ × γ 
