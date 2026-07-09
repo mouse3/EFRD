@@ -75,7 +75,7 @@ k_hogar = k_base × φ × γ
 	- Ejemplo: dos adultos y un hijo → φ = 1.0 + 0.5 + 0.3 = **1.8** 
 - **γ (gamma):** índice de coste de vida del municipio, derivado del valor catastral. Municipios caros tienen γ > 1; municipios rurales, γ < 1. 
 ### 3.3 Cuota del contribuyente 
-Para un hogar con `renta > k_hogar`: 
+sea la renta un sinónimo de "ingreso bruto", entonces, para un hogar con `renta > k_hogar`: 
 ``` 
 x = (renta − k_hogar) / k_hogar     ← exceso relativo de renta 
 tasa = L · (1 − e^(−σ · |x|))         ← tasa efectiva (asintótica) 
