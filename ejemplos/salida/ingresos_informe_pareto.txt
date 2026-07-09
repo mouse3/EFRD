@@ -1,7 +1,7 @@
 ======================================================================
  INFORME EJECUTIVO INTERNIVEL: ANÁLISIS MACROECONÓMICO AVANZADO
 ======================================================================
- Fecha del Análisis      : 2026-07-08 18:01:37
+ Fecha del Análisis      : 2026-07-09 13:35:43
  Base de Datos de Origen : Base_Datos_MACRO.db
  Registros Procesados    : 100,000
 ----------------------------------------------------------------------

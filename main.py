@@ -62,12 +62,13 @@ Columnas:
                        k_hogar (receptores: garantiza suelo de dignidad)
   subsidio_estatal   — aportación pura del Estado (valor absoluto de la cuota negativa)
   tipo_efectivo_pct  — cuota / renta_bruta * 100  (NULL si renta_bruta = 0)
-  estado_hogar       — CONTRIBUYENTE | RECEPTOR | AUDITORÍA | NEUTRO
+  estado_hogar       — CONTRIBUYENTE | RECEPTOR | NEUTRO
 """
 def generar_liquidaciones(path_origen: str, path_destino: str) -> int:
+    """"""
     with sqlite3.connect(path_origen) as conn_src:
         cursor = conn_src.cursor()
-        # SQL solo agrupa los datos brutos por vivienda de forma eficiente
+        # SQL agrupa los datos brutos por vivienda de forma eficiente
         cursor.execute("""
             SELECT
                 ref_catastral,
@@ -82,7 +83,6 @@ def generar_liquidaciones(path_origen: str, path_destino: str) -> int:
         """)
         filas_raw = cursor.fetchall()
 
-    # Procesamiento de las Reglas de Negocio en Python
     filas = []
     for row in filas_raw:
         ref_catastral, renta_bruta_raw, cuota_hogar, phi_total, gamma = row
@@ -94,36 +94,31 @@ def generar_liquidaciones(path_origen: str, path_destino: str) -> int:
         k_hogar = motor.k_base * phi_total * gamma
         
         # ---------------------------------------------------------------------
-        # SOLUCIÓN 1º ERROR: Lógica contable unificada y Suelo de Dignidad Real
+        # LÓGICA ADAPTADA ESTRICTAMENTE A LA DOCUMENTACIÓN
         # ---------------------------------------------------------------------
-        if cuota_hogar < 0:  # RECEPTOR (Cubre tanto renta > 0 como renta = 0)
-            renta_neta_hogar = k_hogar         # Suelo vitalicio garantizado
-            subsidio_estatal = abs(cuota_hogar) # Gasto real para las arcas públicas
-            tipo_efectivo_pct = round((cuota_hogar / renta_bruta_hogar) * 100, 4) if renta_bruta_hogar > 0 else None
-            estado_hogar = 'RECEPTOR'
-            
-        elif cuota_hogar > 0:  # CONTRIBUYENTE
+        
+        # CASO 1: Contribuyente (renta > k_hogar)
+        if renta_bruta_hogar > k_hogar:
             renta_neta_hogar = renta_bruta_hogar - cuota_hogar
             subsidio_estatal = 0.0
             tipo_efectivo_pct = round((cuota_hogar / renta_bruta_hogar) * 100, 4)
             estado_hogar = 'CONTRIBUYENTE'
             
-        else:  # NEUTRO (Cuota exacta a cero)
-            renta_neta_hogar = renta_bruta_hogar
-            subsidio_estatal = 0.0
-            tipo_efectivo_pct = 0.0 if renta_bruta_hogar > 0 else None
-            estado_hogar = 'NEUTRO'
+        # CASO 2: Receptor con renta bajo el umbral (0 < renta <= k_hogar)
+        elif 0 < renta_bruta_hogar <= k_hogar:
+            renta_neta_hogar = k_hogar
+            # Se usa el valor absoluto para representar el impacto positivo del subsidio en las arcas
+            subsidio_estatal = abs(cuota_hogar) 
+            tipo_efectivo_pct = round((cuota_hogar / renta_bruta_hogar) * 100, 4)
+            estado_hogar = 'RECEPTOR'
             
-        # ---------------------------------------------------------------------
-        # SOLUCIÓN 2º ERROR: Sistema de Auditoría Hogar-Céntrico sin Falsos Positivos
-        # ---------------------------------------------------------------------
-        es_ref_virtual = any(ref_catastral.startswith(pref) for pref in ["VIRTUAL_", "SIN_REF", "TEST_", "MOCK_"])
-        
-        if estado_hogar == 'RECEPTOR' and not es_ref_virtual:
-            # Alerta si los ingresos de TODO EL HOGAR son < 15% de su mínimo vital en zona cara
-            if renta_bruta_hogar < (k_hogar * 0.15) and gamma > 1.3:
-                estado_hogar = 'AUDITORÍA'
-                
+        # CASO 3: Receptor estricto sin renta (renta = 0)
+        else:
+            renta_neta_hogar = k_hogar
+            subsidio_estatal = abs(cuota_hogar)
+            tipo_efectivo_pct = None  # Semánticamente correcto: sin base imponible
+            estado_hogar = 'RECEPTOR'
+            
         # Empaquetamos respetando el orden exacto de la base de datos destino
         filas.append((
             ref_catastral,
@@ -158,19 +153,19 @@ def generar_liquidaciones(path_origen: str, path_destino: str) -> int:
             "INSERT INTO liquidaciones_hogares VALUES (?,?,?,?,?,?,?,?,?)", filas
         )
 
-    # Las métricas se mantienen intactas ya que preservamos los índices de las tuplas
+    # Métricas consolidadas según la nueva estructura de la documentación
     contribuyentes  = sum(1 for f in filas if f[6] == "CONTRIBUYENTE")
     receptores      = sum(1 for f in filas if f[6] == "RECEPTOR")
-    auditoria       = sum(1 for f in filas if f[6] == "AUDITORÍA")
     sin_renta       = sum(1 for f in filas if f[1] == 0)
     total_recaudado = sum(f[2] for f in filas if f[2] is not None and f[2] > 0)
     total_subsidios = sum(abs(f[2]) for f in filas if f[2] is not None and f[2] < 0)
-    total_subsidio_puro = sum(f[4] for f in filas if f[4] is not None and f[4] > 0)
+    
+    # Ajuste fino: Filtrado exacto para el subsidio puro donde la renta es estrictamente 0
+    total_subsidio_puro = sum(f[4] for f in filas if f[1] == 0)
 
     print(f"\n[liquidaciones] {len(filas):,} hogares escritos en '{path_destino}'")
     print(f"  Contribuyentes      : {contribuyentes:,}")
     print(f"  Receptores          : {receptores:,}")
-    print(f"  Auditoría           : {auditoria:,}")
     print(f"  Sin renta propia    : {sin_renta:,}  (subsidio íntegro del Estado)")
     print(f"  Recaudación         : {total_recaudado:,.2f} €/mes")
     print(f"  Subsidios totales   : {total_subsidios:,.2f} €/mes")
