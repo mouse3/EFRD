@@ -469,9 +469,12 @@ $$\frac{dn}{dx}\equiv n'=1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}
 
 
 #### Valores donde la derivada es negativa.
-Podemos expresar la derivada como $$n'(x)=1-Lg(w), \text{donde } w=s\abs{\frac{x}{k_h}-1}\geq0 ; \space g(w)=(1-(1-w)e^{-w})$$
+Podemos expresar la derivada como 
 
-Sabemos que 
+$$n'(x)=1-Lg(w), \text{donde } w=s\|\frac{x}{k_h}-1||\geq0 ; \space g(w)=(1-(1-w)e^{-w})$$
+
+Sabemos que
+
 $$n'(x)<0 \text{ cuando } l \gt \frac{1}{g(w)}$$
 
 Derivando 
