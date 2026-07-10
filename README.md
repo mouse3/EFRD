@@ -493,7 +493,7 @@ La expresión $$f(w)\geq 0 \space\space\forall w \Longleftrightarrow L\leq \frac
 
 Es decir: $L\leq \frac{e^2}{e^2+1}$
 
-L no puede ser mayor a la resultante de esa expresión, pues implicaría que tras cierto umbral, la gente comenzaría a perder dinero por cada euro que gana, cosa que viola completamente el propósito de este nuevo sistema.
+L no puede ser mayor a la resultante de esa expresión, pues implicaría que, tras cierto umbral, la gente comenzaría a perder dinero por cada euro que gana, cosa que viola completamente el propósito de este nuevo sistema.
 
 ## 17. Glosario de términos 
 
