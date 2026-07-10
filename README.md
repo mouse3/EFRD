@@ -468,11 +468,27 @@ Y su derivada es definida por la expresión:
 $$\frac{dn}{dx}\equiv n'=1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)$$
 
 
-#### Despejando para $L$:
+#### Valores donde la derivada es negativa.
+Podemos expresar la derivada como $$n'(x)=1-Lg(w), \text{donde } w=s\abs{\frac{x}{k_h}-1}\geq0 ; \space g(w)=(1-(1-w)e^{-w})$$
 
-$$n'\leq0 \therefore 0\geq{1-L\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar})L \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}$$
+Sabemos que 
+$$n'(x)<0 \text{ cuando } l \gt \frac{1}{g(w)}$$
 
-$$\text{ergo,} \space\space\space L\geq {\frac{1}{\left(1-e^{\left(-\sigma |\frac{x-k_hogar}{k_{hogar}}|\right)}\right)-(x-k_{hogar}) \left( \frac{\sigma(x-k_{hogar})}{k_{hogar}|x-k_{hogar}|}e^{\left(-\sigma|\frac{x-k_hogar}{k_{hogar}}|\right)} \right)}} \space\space\space\square$$
+Derivando 
+
+$$g'(w)=\frac{dg(w)}{dw}=e^{-w}(2-w).$$
+
+Esto se anula en w=2 con la segunda derivada:
+
+$$g''(w)=e^{-w}(w-3) \therefore g''(2)=e^{-2}(2-3)=-e^{-2}<0, \text{confirmando que w=2 es un máximo.}$$
+
+Evaluando el máximo 
+
+$$g(2)=1-(1-2)e^{-2}=1+e^{-2}$$
+
+La expresión $$f(w)\geq 0 \space\space\forall w \Longleftrightarrow L\leq \frac{1}{g(2)}$$
+
+Es decir: $L\leq \frac{e^2}{e^2+1}$
 
 L no puede ser mayor a la resultante de esa expresión, pues implicaría que tras cierto umbral, la gente comenzaría a perder dinero por cada euro que gana, cosa que viola completamente el propósito de este nuevo sistema.
 
