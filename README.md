@@ -7,7 +7,11 @@ El sistema clasifica a cada hogar en dos categorías:
 - **Receptor:** su renta no alcanza `k_hogar`. El Estado le complementa hasta ese umbral mediante un subsidio.
 
 Una de las ventajas que proporciona es que, a diferencia del IRPF tradicional, no existen tramos fijos. Una única fórmula continua cubre a toda la población, garantizando que la transición entre receptor y contribuyente sea suave y sin saltos bruscos.
-Esto garantiza que nunca se gane menos trabajando más y que la progresividad sea infinita.
+Esto garantiza que nunca se gane menos trabajando más y que la progresividad sea infinita, como bien se muestra en la siguiente imagen:
+
+<img width="1428" height="935" alt="image" src="https://github.com/user-attachments/assets/56c90f1a-4cf1-4866-b5c6-f7af7842fc2f" />
+Obtenido del [link a desmos](https://www.desmos.com/calculator/8nxnfzbpfo?lang=es), siendo la curva dibujada en rojo la cuota final de un individuo en una España con los datos macroeconómicos de 2026 que vive en una familia con vivienda en una zona urbana cuyos integrantes son 1 persona adicional y un hijo.
+
 
 ---
 
