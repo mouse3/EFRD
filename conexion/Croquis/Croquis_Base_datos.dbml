@@ -1,0 +1,81 @@
+// Bases de datos de origen (INPUTS)
+
+Table Data_base_INE {
+  codigo_postal int [primary key]
+  gamma float [note: 'Referencia oficial para viviendas físicas']
+}
+
+Table Data_base_CNP {
+  dni_nie_nif varchar [primary key, note: 'Eje de identidad (DNI, NIE, NIF)']
+  edad int
+}
+
+Table Data_base_Hacienda {
+  dni_nie_nif varchar [primary key]
+  renta_mensual float [note: 'Si > 0, entrada automática por actividad económica']
+}
+
+Table Data_base_Ministerio_Vivienda {
+  ref_catastral varchar [primary key]
+  codigo_postal int
+}
+
+Table Data_base_Padron {
+  dni_nie_nif varchar [primary key]
+  ref_catastral varchar
+}
+
+Table Data_base_Asistencia_Social {
+  dni_nie_nif varchar [primary key]
+  municipio_asistencia varchar
+  phi_social float [note: 'Vulnerabilidad definida por el trabajador social']
+  gamma_local float [note: 'Coste de vida local definido por el municipio']
+}
+
+// Transformación (Tabla Auxiliar en RAM)
+
+Table Habitabilidad_Real {
+  id_interno int [primary key] 
+  dni_nie_nif varchar
+  ref_catastral varchar [note: 'Padrón (Física) | Hacienda/Asistencia (Virtual)']
+  es_residencia_habitual boolean 
+  
+  Note: 'Esta tabla es Auxiliar. Resuelve la identidad y asigna el techo (Físico o Virtual). No existe como archivo físico.'
+}
+
+
+// Salida final (Formato Largo / Explotado)
+
+Table Base_Datos_FINAL {
+  ref_catastral varchar [note: 'ID Vivienda o VIRTUAL_DNI. Se repite por cada inquilino.']
+  tipo_unit varchar // fisica | virtual
+  es_habitual integer
+  dni_nie_nif varchar [note: 'DNI del inquilino individual']
+  renta_mensual float
+  phi float [note: 'Calculado individualmente: 1. Edad, 2. Asistencia Social, 3. Hacienda']
+  gamma float [note: 'INE (si física) | Asistencia_Social (si virtual)']
+
+  Note: 'Estructura aplanada. La combinación ref_catastral + dni_nie_nif actúa como clave única.'
+}
+
+
+
+// RELACIONES DEL SISTEMA
+
+// Vinculación de Ciudadanos con Orígenes
+Ref: Data_base_Padron.dni_nie_nif > Data_base_CNP.dni_nie_nif
+Ref: Data_base_Hacienda.dni_nie_nif > Data_base_CNP.dni_nie_nif
+Ref: Data_base_Asistencia_Social.dni_nie_nif > Data_base_CNP.dni_nie_nif
+
+// Relaciones de Infraestructura Física
+Ref: Data_base_Padron.ref_catastral > Data_base_Ministerio_Vivienda.ref_catastral
+Ref: Data_base_Ministerio_Vivienda.codigo_postal > Data_base_INE.codigo_postal
+
+// Vías de Entrada a la Tabla Auxiliar de Habitabilidad
+Ref: Habitabilidad_Real.dni_nie_nif > Data_base_Padron.dni_nie_nif
+Ref: Habitabilidad_Real.dni_nie_nif > Data_base_Asistencia_Social.dni_nie_nif
+Ref: Habitabilidad_Real.dni_nie_nif > Data_base_Hacienda.dni_nie_nif
+
+// Trazabilidad de la Salida Final Explotada
+Ref: Base_Datos_FINAL.ref_catastral > Habitabilidad_Real.ref_catastral
+Ref: Base_Datos_FINAL.dni_nie_nif > Data_base_CNP.dni_nie_nif
